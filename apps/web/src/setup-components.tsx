@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LoaderCircle, Check, Monitor, ArrowRight } from "lucide-react";
-import { api, number } from "./api";
+import { api, ApiError, number } from "./api";
 import { useWorkspace } from "./ui";
 import { ChoiceCard } from "./choice-card";
 import type {
@@ -10,19 +10,38 @@ import type {
   ProviderSettings,
 } from "../../../packages/shared/src";
 
-// Polls faster while samples load, the AI describes the suggestion or the
+// Polls faster while samples load, AI prepares, the suggestion builds, or the
 // workspace builds, so the loading screens follow along.
+const active = (status?: string) =>
+  !!status && ["queued", "running"].includes(status);
 const settling = (s?: OnboardingState) =>
   !!s?.sampleProgress ||
+  active(s?.providerJob?.data.status) ||
   (s?.ontologyRun?.data.onboardingSignature === s?.signature &&
-    ["queued", "running"].includes(s?.ontologyRun?.data.status)) ||
-  ["queued", "running"].includes(s?.buildRun?.data.status);
+    active(s?.ontologyRun?.data.status)) ||
+  active(s?.buildRun?.data.status);
+const rateLimited = (err: unknown) =>
+  err instanceof ApiError && err.status === 429;
 export function useSetup() {
   const { id } = useWorkspace();
   return useQuery({
     queryKey: [id, "onboarding"],
     queryFn: () => api<OnboardingState>(`/workspaces/${id}/onboarding`),
-    refetchInterval: (q) => (settling(q.state.data) ? 1000 : 2500),
+    // Helix Cloud shares a tight bucket with provider saves; back off on 429
+    // instead of polling every couple of seconds through the limit.
+    retry: (n, err) => n < (rateLimited(err) ? 6 : 2),
+    retryDelay: (n, err) =>
+      rateLimited(err)
+        ? Math.min(2000 * 2 ** n, 20000)
+        : Math.min(1000 * 2 ** n, 8000),
+    // Idle polls stay sparse so Cloud free-tier limits are not burned on
+    // setup screens that are waiting for the user.
+    refetchInterval: (q) =>
+      rateLimited(q.state.error)
+        ? 15000
+        : settling(q.state.data)
+          ? 2000
+          : 8000,
   });
 }
 export function useSetupAction() {

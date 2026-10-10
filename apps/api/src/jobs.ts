@@ -9,6 +9,7 @@ import {
 import { transaction, resource, type Store } from "./store.js";
 import { buildWorkspace, providerSettings, enqueue } from "./assistant.js";
 import { assert } from "./security.js";
+import { config } from "./config.js";
 import { runSyncJob, runUploadJob } from "./data-jobs.js";
 import { runPipelineJob } from "./pipeline-jobs.js";
 // Queue, leases and retries live here; each job type's work lives with its area.
@@ -23,10 +24,15 @@ const jobHandlers: Record<
 };
 export function startWorker(store: Store) {
   const stopStreams = startChangeStreams(store);
+  // Cloud Helix shares a small request bucket with the API; poll less often.
+  const pollMs =
+    config.helixApiKey || config.helixDatabaseId ? 15000 : 2000;
   let busy = false,
-    stopped = false;
+    stopped = false,
+    backoffMs = pollMs,
+    pauseUntil = 0;
   const tick = async () => {
-    if (busy || stopped) return;
+    if (busy || stopped || Date.now() < pauseUntil) return;
     busy = true;
     try {
       const workspaces = await store.list("global", "workspaceRef");
@@ -208,15 +214,27 @@ export function startWorker(store: Store) {
         }
       }
     } catch (e) {
-      console.error("Worker:", e instanceof Error ? e.message : e);
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("Worker:", msg);
+      // Helix Cloud shares one request bucket; keep polling quiet after 429 so
+      // interactive setup checks can get through.
+      if (/rate.?limit/i.test(msg)) {
+        backoffMs = Math.min(Math.max(backoffMs, pollMs) * 2, 60000);
+        pauseUntil = Date.now() + backoffMs;
+        console.error(`Worker: backing off ${backoffMs}ms after rate limit`);
+      }
     } finally {
       busy = false;
     }
   };
   let running = tick();
   const timer = setInterval(() => {
-    if (!busy) running = tick();
-  }, 2000);
+    if (!busy && Date.now() >= pauseUntil) {
+      running = tick().then(() => {
+        if (Date.now() >= pauseUntil) backoffMs = pollMs;
+      });
+    }
+  }, pollMs);
   return async () => {
     stopped = true;
     clearInterval(timer);

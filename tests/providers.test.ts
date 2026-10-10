@@ -106,6 +106,60 @@ for (const provider of ["local", "claude", "openai"] as const)
       });
     ollama.close();
   });
+it("strips OpenAI-unsupported keywords from strict json schemas", async () => {
+  const requests: any[] = [];
+  vi.stubGlobal(
+    "fetch",
+    vi.fn(async (_url: string, init: any) => {
+      requests.push(JSON.parse(init.body));
+      return Response.json({
+        output: [
+          { content: [{ type: "output_text", text: '{"pipelines":[]}' }] },
+        ],
+        usage: { total_tokens: 3 },
+      });
+    }),
+  );
+  await new Provider(
+    ProviderSchema.parse({
+      provider: "openai",
+      model: "test",
+      apiKey: "test-only",
+    }),
+  ).generate("", {}, {
+    type: "object",
+    properties: {
+      pipelines: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            config: {
+              type: "object",
+              propertyNames: { type: "string" },
+              additionalProperties: {},
+            },
+          },
+          required: ["name", "config"],
+          additionalProperties: false,
+        },
+      },
+    },
+    required: ["pipelines"],
+    additionalProperties: false,
+    $schema: "https://json-schema.org/draft/2020-12/schema",
+  });
+  const format = requests[0].text.format.schema;
+  expect(JSON.stringify(format)).not.toContain("propertyNames");
+  expect(JSON.stringify(format)).not.toContain("$schema");
+  expect(format.properties.pipelines.items.properties.config).toEqual({
+    type: "object",
+    additionalProperties: false,
+    properties: {},
+    required: [],
+  });
+});
 it("sizes the local context window to the prompt and refuses what cannot fit", async () => {
   const seen: number[] = [];
   const ollama = createServer(async (req, res) => {

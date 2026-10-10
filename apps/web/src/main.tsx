@@ -21,7 +21,7 @@ import {
   useQuery,
 } from "@tanstack/react-query";
 import { X } from "lucide-react";
-import { api } from "./api";
+import { api, ApiError } from "./api";
 import { WorkspaceContext, Loading, type AskContext } from "./ui";
 import { Button, SkeletonText, readStorage, writeStorage } from "./kit";
 import { Shell } from "./shell/Shell";
@@ -104,11 +104,25 @@ function RouteFallback() {
     </div>
   );
 }
-function GateError({ retry }: { retry: () => void }) {
+function GateError({
+  retry,
+  error,
+}: {
+  retry: () => void;
+  error?: unknown;
+}) {
+  const rateLimited =
+    error instanceof ApiError
+      ? error.status === 429
+      : /rate.?limit/i.test(String((error as Error)?.message || error || ""));
   return (
     <div className="rosf-app rosf-center">
       <div role="alert" className="rosf-gate-error">
-        <p>Couldn’t check workspace setup.</p>
+        <p>
+          {rateLimited
+            ? "Helix Cloud rate-limited setup checks. Wait a few seconds, then retry."
+            : "Couldn’t check workspace setup."}
+        </p>
         <Button onClick={retry}>Retry</Button>
       </div>
     </div>
@@ -122,12 +136,12 @@ function SetupGate({
   check: () => Promise<{ data?: any; error: unknown }>;
 }) {
   const navigate = useNavigate(),
-    [failed, setFailed] = useState(false);
+    [error, setError] = useState<unknown>(null);
   useEffect(() => {
     let live = true;
     void check().then((r) => {
       if (!live) return;
-      if (r.error) setFailed(true);
+      if (r.error) setError(r.error);
       else if (!r.data?.complete)
         navigate(paths.onboarding(), { replace: true });
     });
@@ -135,8 +149,8 @@ function SetupGate({
       live = false;
     };
   }, []);
-  return failed ? (
-    <GateError retry={() => window.location.reload()} />
+  return error ? (
+    <GateError retry={() => window.location.reload()} error={error} />
   ) : (
     <div className="rosf-app rosf-center">
       <Loading />
@@ -170,6 +184,14 @@ function App() {
     enabled: !!selected && !inSetup,
     // Once setup is complete the shell stays open; no need to ask again.
     staleTime: (q) => ((q.state.data as any)?.complete ? Infinity : 0),
+    // Cloud Helix shares a tight request bucket; back off on 429 instead of
+    // failing the setup gate after three quick retries.
+    retry: (n, err) =>
+      n < (err instanceof ApiError && err.status === 429 ? 6 : 2),
+    retryDelay: (n, err) =>
+      err instanceof ApiError && err.status === 429
+        ? Math.min(2000 * 2 ** n, 20000)
+        : Math.min(1000 * 2 ** n, 8000),
   });
   useEffect(() => {
     if (selected) writeStorage("foundry.workspace", selected.id);
@@ -199,7 +221,12 @@ function App() {
       </div>
     );
   if (gated && onboarding.error)
-    return <GateError retry={() => onboarding.refetch()} />;
+    return (
+      <GateError
+        error={onboarding.error}
+        retry={() => onboarding.refetch()}
+      />
+    );
   if (gated && !onboarding.data?.complete)
     return (
       <SetupGate

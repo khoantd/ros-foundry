@@ -1,3 +1,35 @@
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+function parseBody(text: string, status: number): unknown {
+  if (!text) {
+    if (status >= 200 && status < 300) return undefined;
+    throw new ApiError(
+      status === 429
+        ? "Too many requests. Wait a moment, then retry."
+        : "Couldn’t reach the API. Retry in a moment.",
+      status || 502,
+    );
+  }
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new ApiError(
+      status >= 200 && status < 300
+        ? "Unexpected response from the server"
+        : "Couldn’t reach the API. Retry in a moment.",
+      status || 502,
+    );
+  }
+}
+
 export async function api<T = any>(
   path: string,
   body?: unknown,
@@ -22,8 +54,12 @@ export async function api<T = any>(
           ? body
           : JSON.stringify(body),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Request failed");
+  const data = parseBody(await res.text(), res.status) as any;
+  if (!res.ok)
+    throw new ApiError(
+      typeof data?.error === "string" ? data.error : "Request failed",
+      res.status,
+    );
   return data;
 }
 export const number = (n: number | undefined) =>

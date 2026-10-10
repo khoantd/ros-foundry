@@ -105,16 +105,24 @@ export async function createApp(store: Store) {
   });
   await app.register(swaggerUI, { routePrefix: "/api/docs" });
   app.setErrorHandler((e: any, req, reply) => {
-    const status = e instanceof z.ZodError ? 400 : e.statusCode || 500;
+    const helixLimited =
+      typeof e?.isRateLimited === "function" && e.isRateLimited();
+    const status = e instanceof z.ZodError
+      ? 400
+      : helixLimited
+        ? 429
+        : e.statusCode || 500;
     reply.code(status).send({
       error:
         status === 500
           ? "Internal error; check server logs"
-          : e instanceof z.ZodError
-            ? e.issues
-                .map((x: any) => x.path.join(".") + ": " + x.message)
-                .join("; ")
-            : e.message,
+          : status === 429
+            ? "Helix Cloud rate limit reached. Wait a few seconds, then retry."
+            : e instanceof z.ZodError
+              ? e.issues
+                  .map((x: any) => x.path.join(".") + ": " + x.message)
+                  .join("; ")
+              : e.message,
     });
     if (status === 500) req.log.error(e);
   });

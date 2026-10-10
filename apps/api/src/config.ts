@@ -8,6 +8,9 @@ export const config = {
   allowNetwork: process.env.ALLOW_NETWORK_ACCESS === "true",
   origin: process.env.APP_ORIGIN || "http://localhost:5173",
   helix: process.env.HELIX_URL || "http://127.0.0.1:6969",
+  // Cloud GA requires these; leave blank for local HelixDB.
+  helixApiKey: process.env.HELIX_API_KEY || "",
+  helixDatabaseId: process.env.HELIX_DATABASE_ID || "",
   executor: process.env.EXECUTOR_URL || "http://127.0.0.1:3002",
   internalKey: process.env.INTERNAL_KEY || "",
   encryptionKey: process.env.ENCRYPTION_KEY || "",

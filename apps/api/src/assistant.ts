@@ -103,6 +103,146 @@ function inputsFor(ids: string[], datasets: Map<string, Resource>) {
     };
   });
 }
+const DATASET_TABLE_RE = /\bd_[a-z0-9_]+\b/gi;
+function tablesNamedInSql(sql: string): string[] {
+  return [
+    ...new Set((sql.match(DATASET_TABLE_RE) || []).map((t) => t.toLowerCase())),
+  ];
+}
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function replaceSqlTable(sql: string, from: string, to: string) {
+  return sql.replace(new RegExp(`\\b${escapeRegExp(from)}\\b`, "gi"), to);
+}
+/** Columns mentioned in SQL (quoted identifiers and bare names). */
+function columnsMentionedInSql(sql: string): Set<string> {
+  const cols = new Set<string>();
+  for (const m of sql.matchAll(/"([^"]+)"/g)) cols.add(m[1]);
+  for (const m of sql.matchAll(/\b([A-Za-z_][A-Za-z0-9_]*)\b/g))
+    cols.add(m[1]);
+  return cols;
+}
+/** Pipeline/source ids implicated by ontology columns referenced in SQL. */
+function idsInferredFromSql(sql: string, bundle: Bundle): string[] {
+  const cols = columnsMentionedInSql(sql);
+  const pipelineIds = new Set(bundle.pipelines.map((p) => pipelineId(p.name)));
+  const ids: string[] = [];
+  for (const t of bundle.ontology) {
+    if (!pipelineIds.has(t.datasetId) && !t.datasetId.startsWith("pipeline_"))
+      continue;
+    const related = bundle.relationships.flatMap((r) => {
+      if (r.fromType === t.name) return [r.fromColumn];
+      if (r.toType === t.name) return [r.toColumn];
+      return [];
+    });
+    if (
+      [t.primaryKey, ...t.properties, ...related].some((c) => cols.has(c))
+    )
+      ids.push(t.datasetId);
+  }
+  return [...new Set(ids)];
+}
+function canonicalTables(
+  datasets: Map<string, Resource>,
+  pipelineIds: string[],
+) {
+  return new Set([
+    ...[...datasets.keys()].map((id) => datasetTable(id).toLowerCase()),
+    ...pipelineIds.map((id) => datasetTable(id).toLowerCase()),
+  ]);
+}
+/** Pair unknown d_* tokens with unused expected tables when counts match. */
+function pairRewriteSql(
+  sql: string,
+  expectedIds: string[],
+  knownTables: Set<string>,
+): string {
+  const expectedTables = [...new Set(expectedIds.map((id) => datasetTable(id)))];
+  const named = tablesNamedInSql(sql);
+  const unknown = named.filter((t) => !knownTables.has(t));
+  if (!unknown.length) return sql;
+  const unused = expectedTables.filter(
+    (t) => !named.includes(t.toLowerCase()),
+  );
+  const unkPipe = unknown.filter((t) => t.startsWith("d_pipeline_"));
+  const unusedPipe = unused.filter((t) =>
+    t.toLowerCase().startsWith("d_pipeline_"),
+  );
+  let pairs: [string, string][] = [];
+  if (unkPipe.length && unkPipe.length === unusedPipe.length)
+    pairs = unkPipe.map((from, i) => [from, unusedPipe[i]]);
+  else if (unknown.length === unused.length)
+    pairs = unknown.map((from, i) => [from, unused[i]]);
+  else return sql;
+  let out = sql;
+  for (const [from, to] of pairs) out = replaceSqlTable(out, from, to);
+  return out;
+}
+function realignSql(
+  sql: string,
+  declaredIds: string[],
+  bundle: Bundle,
+  knownTables: Set<string>,
+): string {
+  const pipelineIds = bundle.pipelines.map((p) => pipelineId(p.name));
+  const inferred = idsInferredFromSql(sql, bundle);
+  let out = pairRewriteSql(
+    sql,
+    [...new Set([...declaredIds, ...inferred])],
+    knownTables,
+  );
+  if (tablesNamedInSql(out).some((t) => !knownTables.has(t)))
+    out = pairRewriteSql(
+      out,
+      [...new Set([...declaredIds, ...inferred, ...pipelineIds])],
+      knownTables,
+    );
+  return out;
+}
+function idsNamedInSql(
+  sql: string,
+  datasets: Map<string, Resource>,
+  pipelineByTable: Map<string, string>,
+): string[] {
+  const named = new Set(tablesNamedInSql(sql));
+  const ids: string[] = [];
+  for (const id of datasets.keys())
+    if (named.has(datasetTable(id).toLowerCase())) ids.push(id);
+  for (const [table, id] of pipelineByTable)
+    if (named.has(table) && !ids.includes(id)) ids.push(id);
+  return ids;
+}
+/** Dependencies: pipeline A depends on B when A's SQL names B's output table. */
+function sortPipelinesByDeps(pipelines: Bundle["pipelines"]) {
+  const tableToName = new Map(
+    pipelines.map((p) => [
+      datasetTable(pipelineId(p.name)).toLowerCase(),
+      p.name,
+    ]),
+  );
+  const deps = new Map<string, Set<string>>();
+  for (const p of pipelines) {
+    const need = new Set<string>();
+    for (const sql of [p.sql, ...p.checks.map((c) => c.sql)])
+      for (const table of tablesNamedInSql(sql)) {
+        const dep = tableToName.get(table);
+        if (dep && dep !== p.name) need.add(dep);
+      }
+    deps.set(p.name, need);
+  }
+  const sorted: typeof pipelines = [];
+  const remaining = new Map(pipelines.map((p) => [p.name, p]));
+  while (remaining.size) {
+    const ready = [...remaining.values()].filter((p) =>
+      [...(deps.get(p.name) || [])].every((d) => !remaining.has(d)),
+    );
+    const next = ready[0] || remaining.values().next().value!;
+    sorted.push(next);
+    remaining.delete(next.name);
+  }
+  return sorted;
+}
 export async function validateBundle(
   store: Store,
   scope: string,
@@ -148,6 +288,32 @@ export async function validateBundle(
   }
   for (const d of bundle.dashboards)
     for (const w of d.widgets) w.inputs = w.inputs.map(resolveDataset);
+  const pipelineIds = bundle.pipelines.map((p) => pipelineId(p.name));
+  const pipelineByTable = new Map(
+    bundle.pipelines.map((p) => [
+      datasetTable(pipelineId(p.name)).toLowerCase(),
+      pipelineId(p.name),
+    ]),
+  );
+  const knownTables = canonicalTables(datasets, pipelineIds);
+  // Repair/model SQL often keeps stale d_pipeline_* hashes after a rename.
+  for (const p of bundle.pipelines) {
+    const self = pipelineId(p.name);
+    p.sql = realignSql(p.sql, p.inputs, bundle, knownTables);
+    for (const c of p.checks)
+      c.sql = realignSql(c.sql, [...p.inputs, self], bundle, knownTables);
+  }
+  for (const d of bundle.dashboards)
+    for (const w of d.widgets) {
+      w.sql = realignSql(w.sql, w.inputs, bundle, knownTables);
+      w.inputs = [
+        ...new Set([
+          ...w.inputs,
+          ...idsNamedInSql(w.sql, datasets, pipelineByTable),
+        ]),
+      ];
+    }
+  bundle.pipelines = sortPipelinesByDeps(bundle.pipelines);
   const derivedIds = new Set<string>();
   const unique = (items: { name: string }[]) =>
     new Set(items.map((x) => x.name)).size === items.length;
@@ -173,14 +339,22 @@ export async function validateBundle(
     }
   };
   const query = async (ids: string[], sql: string, persist = false) => {
-    for (const id of ids) {
+    const expanded = [
+      ...new Set([
+        ...ids,
+        ...idsNamedInSql(sql, datasets, pipelineByTable).filter((id) =>
+          datasets.has(id),
+        ),
+      ]),
+    ];
+    for (const id of expanded) {
       const d = datasets.get(id);
       if (d && !derivedIds.has(id)) inputVersions[id] = d.data.activeVersion;
     }
     return execute({
       mode: "query",
       scope,
-      inputs: inputsFor(ids, datasets),
+      inputs: inputsFor(expanded, datasets),
       sql,
       version: randomUUID(),
       persist,
@@ -560,15 +734,21 @@ export async function buildWorkspace(store: Store, scope: string, id: string) {
     const out = Object.fromEntries(
       Object.entries(value).map(([k, v]) => [k, groundedSchema(v)]),
     ) as any;
-    if (out.properties?.datasetId)
+    const datasetIds = datasets.map((d) => d.id);
+    // OpenAI rejects empty enums; leave the plain string schema when none exist.
+    if (out.properties?.datasetId && datasetIds.length)
       out.properties.datasetId = {
         type: "string",
-        enum: datasets.map((d) => d.id),
+        enum: datasetIds,
       };
-    if (out.properties?.inputs && !out.properties?.datasetId)
+    if (
+      out.properties?.inputs &&
+      !out.properties?.datasetId &&
+      datasetIds.length
+    )
       out.properties.inputs = {
         ...out.properties.inputs,
-        items: { type: "string", enum: datasets.map((d) => d.id) },
+        items: { type: "string", enum: datasetIds },
       };
     const names = context.ontology?.ontology?.map((t: any) => t.name) || [];
     if (out.properties?.objectType && names.length)
@@ -820,9 +1000,7 @@ export async function buildWorkspace(store: Store, scope: string, id: string) {
       // table they didn't list, so every dataset table the SQL names is an
       // input too.
       const inputsOf = (p: z.infer<typeof analysis>) => {
-        const named = new Set(
-          (p.sql.match(/\bd_[a-z0-9_]+\b/gi) || []).map((t) => t.toLowerCase()),
-        );
+        const named = new Set(tablesNamedInSql(p.sql));
         const listed = p.inputs.map((ref) => {
           if (map.has(ref)) return ref;
           const matches = [...map.values()].filter(

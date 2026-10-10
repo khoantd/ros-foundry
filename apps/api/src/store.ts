@@ -45,10 +45,43 @@ export interface Store {
 }
 const anchor = (key: string) =>
   g().nWithLabelWhere("FoundryRecord", SourcePredicate.eq("key", key));
+function helixClient() {
+  let client = Client.server(config.helix);
+  if (config.helixApiKey) client = client.withApiKey(config.helixApiKey);
+  if (config.helixDatabaseId)
+    client = client.withDatabaseId(config.helixDatabaseId);
+  return client;
+}
+function isHelixFence(err: unknown) {
+  const msg = String(
+    (err as { serverMessage?: string; message?: string })?.serverMessage ||
+      (err as Error)?.message ||
+      err ||
+      "",
+  );
+  return /detected newer DB client|Closed error/i.test(msg);
+}
 export class HelixStore implements Store {
-  client = Client.server(config.helix);
+  client = helixClient();
+  // Cloud readers can be fenced; once seen, pin reads to the writer for this process.
+  private writerReads =
+    Boolean(config.helixApiKey) || Boolean(config.helixDatabaseId);
   async read(q: any): Promise<any> {
-    return this.client.query(q.toQueryRequest()).send();
+    const request = q.toQueryRequest();
+    if (this.writerReads) {
+      return this.client
+        .requestBuilder()
+        .writerOnly()
+        .query(request)
+        .send();
+    }
+    try {
+      return await this.client.query(request).send();
+    } catch (err) {
+      if (!isHelixFence(err)) throw err;
+      this.writerReads = true;
+      return this.client.requestBuilder().writerOnly().query(request).send();
+    }
   }
   async write(q: any): Promise<any> {
     return this.client

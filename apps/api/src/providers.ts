@@ -115,11 +115,27 @@ export class Provider implements ModelProvider {
       body: JSON.stringify(body),
       signal: abort,
     });
-    if (!response.ok)
+    if (!response.ok) {
+      const detail = (await response.text().catch(() => "")).trim();
+      // Prefer the provider's short message when present; never log the key.
+      let hint = detail.slice(0, 300);
+      try {
+        const parsed = JSON.parse(detail);
+        hint =
+          parsed?.error?.message ||
+          parsed?.message ||
+          parsed?.error?.code ||
+          hint;
+      } catch {
+        /* plain text body */
+      }
       throw new AppError(
         502,
-        `${s.provider} returned HTTP ${response.status}. Check the model, credentials, and provider quota.`,
+        `${s.provider} returned HTTP ${response.status}${
+          hint ? `: ${hint}` : ""
+        }. Check the model, credentials, and provider quota.`,
       );
+    }
     let value: unknown,
       tokens = 0;
     const data = (await response.json()) as any;
@@ -197,14 +213,26 @@ function boundedLists(schema: any): any {
   if (o.type === "array" && o.maxItems === undefined) o.maxItems = 12;
   return o;
 }
+// OpenAI strict json_schema rejects several Zod/JSON-Schema keywords (notably
+// propertyNames from z.record). Strip those and force closed objects.
+const openaiUnsupported = new Set([
+  "$schema",
+  "default",
+  "propertyNames",
+  "patternProperties",
+  "unevaluatedProperties",
+  "unevaluatedItems",
+  "examples",
+]);
 function strictSchema(schema: any): any {
   if (Array.isArray(schema)) return schema.map(strictSchema);
   if (!schema || typeof schema !== "object") return schema;
   const o = Object.fromEntries(
     Object.entries(schema)
-      .filter(([k]) => !["$schema", "default"].includes(k))
+      .filter(([k]) => !openaiUnsupported.has(k))
       .map(([k, v]) => [k, strictSchema(v)]),
   ) as any;
+  // Free-form maps cannot be expressed under strict mode; keep an empty object.
   if (o.type === "object" && !o.properties) {
     o.properties = {};
   }
@@ -217,6 +245,8 @@ function strictSchema(schema: any): any {
     }
     o.required = Object.keys(o.properties);
   }
+  // Empty enums are invalid for the Responses API.
+  if (Array.isArray(o.enum) && o.enum.length === 0) delete o.enum;
   return o;
 }
 export async function verifyPinnedModel(settings: ProviderSettings) {

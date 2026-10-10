@@ -31,11 +31,22 @@ Full-identity rename Helix Foundry → **ROS Foundry** (Royal Solution portfolio
 - _(none)_
 - **Blockers:** none
 
+## Done (this session)
+
+- Fixed onboarding AI-choice save error (`JSON.parse: unexpected end of data`): `api()` now handles empty/non-JSON proxy bodies; clearer Helix 429 messages; `useSetup` backs off on 429; SetupGate passes error through.
+- Resolved Helix Cloud 429s: `.env` pointed at local HelixDB `http://127.0.0.1:6996`; idle onboarding poll slowed to 8s; provider-job included in settling polls.
+- Local workspace `09882d97-…` responds without rate limits (~30ms); Cloud workspace id stays on Cloud only.
+- Fixed OpenAI HTTP 400 on pipeline generation: `strictSchema` strips `propertyNames` (from `z.record`) and empty enums; provider errors now include OpenAI’s message. Failed review run advanced to `awaiting_review`.
+- Fixed Review Catalog Errors from stale `d_pipeline_*` after Prepare/repair: `validateBundle` realigns SQL table refs, expands query inputs from SQL, topo-sorts cross-pipeline deps (`apps/api/src/assistant.ts` + `tests/workflow.test.ts`).
+- Pipeline detail shows live build status (queued → running → succeeded/failed) from jobs + live events; Run now disabled while building (`build-status.ts`, `detail.tsx`).
+
 ## Next
 
-1. Promote Company Brain product to approved when ready.
-2. Optional: rename on-disk folder to `ros-foundry`.
-3. Optional: apply `SqlView` chrome to Analyst `.an-sql`.
+1. Re-run Prepare → Review on the sample workspace to confirm Catalog Errors are gone.
+2. Promote Company Brain product to approved when ready.
+3. Optional: rename on-disk folder to `ros-foundry`.
+4. Optional: apply `SqlView` chrome to Analyst `.an-sql`.
+5. Re-enable Helix Cloud in `.env` only when needed (commented credentials kept).
 
 ## Decisions
 

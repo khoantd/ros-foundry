@@ -1,9 +1,11 @@
+import { useMemo } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Pencil, Play, Workflow } from "lucide-react";
 import { api, relative } from "../../api";
 import { paths } from "../../paths";
 import { useWorkspace, useAction, useResources } from "../../ui";
+import { useLiveActivity } from "../../shell/live";
 import {
   Button,
   ButtonLink,
@@ -13,21 +15,41 @@ import {
   PageHeader,
   Panel,
   Skeleton,
+  StatusBadge,
+  formatRelative,
+  toStatus,
 } from "../../kit";
 import type { Resource } from "../../../../../packages/shared/src";
 import { SqlView } from "./sql-view";
+import {
+  isBuildActive,
+  latestPipelineBuild,
+  mergeBuildJobs,
+} from "./build-status";
 
 export function PipelineDetail() {
   const { pipelineId = "" } = useParams();
   const { id, role } = useWorkspace();
   const action = useAction();
+  const live = useLiveActivity();
   const datasets = useResources("dataset");
+  const jobs = useResources("job", { limit: 500 });
   const detail = useQuery({
     queryKey: [id, "pipeline", pipelineId],
     queryFn: () =>
       api<Resource>(`/workspaces/${id}/resources/pipeline/${pipelineId}`),
     enabled: !!pipelineId,
   });
+
+  const latestBuild = useMemo(() => {
+    if (!pipelineId) return null;
+    const stored = (jobs.data?.items || []) as Resource[];
+    return latestPipelineBuild(
+      mergeBuildJobs(stored, live.jobs),
+      pipelineId,
+    );
+  }, [jobs.data?.items, live.jobs, pipelineId]);
+  const building = isBuildActive(latestBuild);
 
   if (detail.isPending) {
     return (
@@ -57,6 +79,13 @@ export function PipelineDetail() {
   const output = ((datasets.data?.items || []) as Resource[]).find(
     (d) => d.id === p.data.outputDatasetId,
   );
+  const buildStatus = latestBuild
+    ? toStatus(String(latestBuild.data.status))
+    : null;
+  const buildError =
+    latestBuild?.data.status === "failed" && latestBuild.data.error
+      ? String(latestBuild.data.error)
+      : null;
 
   return (
     <Page>
@@ -70,6 +99,21 @@ export function PipelineDetail() {
         icon={<Workflow size={20} aria-hidden />}
         meta={
           <ul className="pp-meta">
+            {buildStatus && (
+              <li className="pp-build-meta" aria-live="polite">
+                <StatusBadge status={buildStatus} size="sm" />
+                <span>
+                  {building
+                    ? buildStatus === "queued"
+                      ? "Build queued"
+                      : "Building…"
+                    : buildStatus === "failed"
+                      ? "Last build failed"
+                      : "Last build"}{" "}
+                  {formatRelative(latestBuild!.updatedAt)}
+                </span>
+              </li>
+            )}
             <li>Updated {relative(p.updatedAt)}</li>
             {output && (
               <li>
@@ -84,7 +128,8 @@ export function PipelineDetail() {
             <div className="pp-actions" style={{ margin: 0 }}>
               <Button
                 icon={Play}
-                pending={action.pending}
+                pending={action.pending || building}
+                disabled={building}
                 onClick={() =>
                   void action.run(
                     () =>
@@ -93,7 +138,7 @@ export function PipelineDetail() {
                   )
                 }
               >
-                Run now
+                {building ? "Building…" : "Run now"}
               </Button>
               <ButtonLink icon={Pencil} to={paths.pipelineEdit(p.id)}>
                 Edit
@@ -102,6 +147,12 @@ export function PipelineDetail() {
           )
         }
       />
+
+      {buildError && (
+        <p className="pp-error" role="alert">
+          {buildError}
+        </p>
+      )}
 
       <Panel title="Inputs">
         {inputIds.length === 0 ? (

@@ -14,6 +14,7 @@ import {
   validateBundle,
   buildWorkspace,
   enqueue,
+  pipelineId,
 } from "../apps/api/src/assistant.js";
 import { Provider } from "../apps/api/src/providers.js";
 import { BundleSchema, datasetTable } from "../packages/shared/src/index.js";
@@ -184,6 +185,107 @@ it("moves a type to the only dataset holding its key and properties", async () =
   fitting.ontology[0].properties = ["id"];
   await validateBundle(store, scope, fitting);
   expect(fitting.ontology[0].datasetId).toBe(orders.id);
+});
+it("realigns stale d_pipeline_* SQL and loads tables named in the query", async () => {
+  const campaignsName = "Campaigns (S3)",
+    accountsName = "Accounts (PlanetScale + WorkOS + Stripe)",
+    campaignsId = pipelineId(campaignsName),
+    accountsId = pipelineId(accountsName),
+    // Deliberately not equal to pipelineId() of either pipeline name above.
+    staleCampaigns = "d_pipeline_aaaaaaaaaaaaaaaa",
+    staleAccounts = "d_pipeline_bbbbbbbbbbbbbbbb";
+  const b = BundleSchema.parse({
+    summary: "Stale prepared pipeline table refs",
+    assumptions: [],
+    catalog: [
+      {
+        datasetId: customers.id,
+        description: "Customers",
+        tags: ["customers"],
+      },
+    ],
+    pipelines: [
+      // Accounts listed first (repair order); its check references Campaigns — must topo-sort.
+      {
+        name: accountsName,
+        inputs: [customers.id],
+        sql: `SELECT id, region, lower(trim(CAST(id AS VARCHAR))) AS signup_campaign_id_key FROM ${datasetTable(customers.id)}`,
+        nodes: [],
+        checks: [
+          {
+            name: "Campaign keys resolve",
+            sql: `SELECT count(*) = count(CASE WHEN "signup_campaign_id_key" IN (SELECT "campaign_id_key" FROM "${staleCampaigns}") THEN 1 END) AS ok FROM "${datasetTable(accountsId)}"`,
+          },
+        ],
+      },
+      {
+        name: campaignsName,
+        inputs: [customers.id],
+        sql: `SELECT id AS campaign_id, lower(trim(CAST(id AS VARCHAR))) AS campaign_id_key FROM ${datasetTable(customers.id)}`,
+        nodes: [],
+        checks: [
+          {
+            name: "One row per campaign",
+            sql: `SELECT count(*) = count(DISTINCT campaign_id) AS ok FROM ${datasetTable(campaignsId)}`,
+          },
+        ],
+      },
+    ],
+    ontology: [
+      {
+        name: "Account",
+        datasetId: accountsId,
+        primaryKey: "id",
+        properties: ["id", "region", "signup_campaign_id_key"],
+      },
+      {
+        name: "Campaign",
+        datasetId: campaignsId,
+        primaryKey: "campaign_id",
+        properties: ["campaign_id", "campaign_id_key"],
+      },
+    ],
+    relationships: [
+      {
+        name: "signed up via",
+        fromType: "Account",
+        toType: "Campaign",
+        fromColumn: "signup_campaign_id_key",
+        toColumn: "campaign_id_key",
+      },
+    ],
+    dashboards: [
+      {
+        name: "Failed Prepare local repair overview",
+        widgets: [
+          {
+            title: "Unmatched accounts to campaigns by normalized campaign id",
+            type: "table",
+            // Inputs omit the pipelines; SQL uses stale hashes (repair drift).
+            inputs: [customers.id],
+            sql: `SELECT count(*) AS "records" FROM "${staleAccounts}" a LEFT JOIN "${staleCampaigns}" c ON a.signup_campaign_id_key = c.campaign_id_key WHERE c.campaign_id_key IS NULL`,
+          },
+        ],
+      },
+    ],
+    actions: [],
+  });
+  const report = await validateBundle(store, scope, b);
+  expect(
+    report.checks.filter((c) => !c.passed),
+    JSON.stringify(report.checks),
+  ).toEqual([]);
+  expect(b.dashboards[0].widgets[0].sql).toContain(datasetTable(accountsId));
+  expect(b.dashboards[0].widgets[0].sql).toContain(datasetTable(campaignsId));
+  expect(b.dashboards[0].widgets[0].sql).not.toContain(staleAccounts);
+  const accounts = b.pipelines.find((p) => p.name === accountsName)!;
+  expect(accounts.checks[0].sql).toContain(datasetTable(campaignsId));
+  expect(accounts.checks[0].sql).not.toContain(staleCampaigns);
+  // Campaigns must run before Accounts so the cross-pipeline check can load it.
+  expect(b.pipelines.map((p) => p.name)).toEqual([
+    campaignsName,
+    accountsName,
+  ]);
 });
 it("binds approvals to input versions and preserves manual catalog edits across refreshes", async () => {
   const p = await saveProposal(store, scope, bundle());
