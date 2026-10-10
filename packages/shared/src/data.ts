@@ -26,6 +26,15 @@ export const SourceSchema = z.object({
       "UTC snapshot fallback schedule. Working PostgreSQL/MySQL CDC takes precedence; defaults to every five minutes when CDC is unavailable, hourly for Stripe and WorkOS, and every six hours for PostHog.",
     ),
 });
+/** Partial update for connection sync controls (schedule + pause). */
+export const SourceSyncUpdateSchema = z
+  .object({
+    schedule: z.string().nullable().optional(),
+    paused: z.boolean().optional(),
+  })
+  .refine((v) => v.schedule !== undefined || v.paused !== undefined, {
+    message: "Provide schedule and/or paused",
+  });
 export type SourceSyncState = {
   mode: "auto" | "cdc" | "snapshot";
   status: "checking" | "starting" | "live" | "retrying" | "ready";

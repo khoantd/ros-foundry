@@ -1,0 +1,825 @@
+/* Pipelines area styles (prefix pp-). */
+
+.pp-search {
+  max-width: 360px;
+  margin-bottom: var(--rosf-space-3);
+}
+
+.pp-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pp-list a {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 2px 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid var(--rosf-border);
+  border-radius: var(--rosf-radius);
+  background: var(--rosf-raised);
+  color: var(--rosf-text);
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    border-color var(--rosf-duration) var(--rosf-ease),
+    background var(--rosf-duration) var(--rosf-ease);
+}
+
+.pp-list a:hover {
+  border-color: var(--rosf-border-strong);
+  background: var(--rosf-hover);
+}
+
+.pp-list a:focus-visible {
+  outline: 2px solid var(--rosf-ring);
+  outline-offset: 2px;
+}
+
+.pp-list svg {
+  grid-row: span 2;
+  color: var(--rosf-muted);
+}
+
+.pp-list strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 560;
+}
+
+.pp-list small {
+  grid-column: 2;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--rosf-muted);
+  font-size: var(--rosf-text-sm);
+}
+
+.pp-list .pp-chevron {
+  grid-row: span 2;
+  color: var(--rosf-muted);
+}
+
+.pp-form {
+  display: grid;
+  gap: var(--rosf-space-3);
+  max-width: 720px;
+}
+
+.pp-form-wide {
+  max-width: none;
+}
+
+.pp-form textarea.pp-sql,
+.pp-dag-panel textarea.pp-sql {
+  min-height: 180px;
+  padding: 12px 14px;
+  border: 1px solid var(--rosf-border);
+  border-radius: var(--rosf-radius);
+  background: var(--rosf-sunken, var(--rosf-raised));
+  color: var(--rosf-text);
+  font-family: var(--rosf-font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  font-size: var(--rosf-text-sm);
+  line-height: 1.6;
+  tab-size: 2;
+  resize: vertical;
+}
+
+.pp-form textarea.pp-sql:focus,
+.pp-dag-panel textarea.pp-sql:focus {
+  outline: 2px solid var(--rosf-accent, currentColor);
+  outline-offset: 2px;
+}
+
+.pp-sql-field-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.pp-sql-field-head--end {
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+
+.pp-sql-field-head > span,
+.pp-sql-field-head > label {
+  font-weight: 600;
+}
+
+.pp-sql-view {
+  margin: 0;
+  border: 1px solid var(--rosf-border);
+  border-radius: var(--rosf-radius);
+  background: var(--rosf-sunken, var(--rosf-raised));
+  overflow: hidden;
+}
+
+.pp-sql-view-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--rosf-border);
+  color: var(--rosf-muted);
+  font-size: var(--rosf-text-sm);
+}
+
+.pp-sql-view-body {
+  max-height: min(420px, 50vh);
+  margin: 0;
+  padding: 14px 16px;
+  overflow: auto;
+  color: var(--rosf-text);
+  font-family: var(--rosf-font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  font-size: var(--rosf-text-sm);
+  line-height: 1.6;
+  white-space: pre;
+  tab-size: 2;
+}
+
+.pp-sql-view-body:focus {
+  outline: 2px solid var(--rosf-accent, currentColor);
+  outline-offset: -2px;
+}
+
+.pp-sql-view-body code {
+  color: inherit;
+  font: inherit;
+}
+
+.pp-sql-kw {
+  color: var(--rosf-accent-text, var(--rosf-accent));
+  font-weight: 600;
+}
+
+.pp-sql-str {
+  color: var(--rosf-success-text, #2f6b3a);
+}
+
+.pp-sql-num {
+  color: var(--rosf-warning-text, #9a6700);
+}
+
+.pp-sql-id {
+  color: var(--rosf-text-2, var(--rosf-text));
+}
+
+.pp-sql-punct {
+  color: var(--rosf-muted);
+}
+
+.pp-sql-action {
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-sql-action {
+    transition: none;
+  }
+}
+
+.pp-dataset-picker {
+  display: grid;
+  gap: 8px;
+  margin-top: var(--rosf-space-2);
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.pp-dataset-picker legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0;
+  color: var(--rosf-text-2);
+  font-size: var(--rosf-text-sm);
+  font-weight: 600;
+}
+
+.pp-dataset-count {
+  color: var(--rosf-muted);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.pp-datasets {
+  display: grid;
+  gap: 4px;
+  max-height: 220px;
+  overflow: auto;
+  padding: 6px;
+  border: 1px solid var(--rosf-border);
+  border-radius: var(--rosf-radius);
+  background: var(--rosf-raised, var(--rosf-surface));
+}
+
+.pp-dataset {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--rosf-radius-sm);
+  background: transparent;
+  color: var(--rosf-text);
+  font: inherit;
+  font-size: var(--rosf-text-sm);
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.pp-dataset:hover {
+  background: var(--rosf-hover);
+}
+
+.pp-dataset.is-checked {
+  border-color: color-mix(in srgb, var(--rosf-accent) 28%, var(--rosf-border));
+  background: var(--rosf-selected, var(--rosf-accent-soft));
+}
+
+.pp-dataset input[type="checkbox"] {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  min-width: 16px;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--rosf-accent);
+  cursor: pointer;
+}
+
+.pp-dataset-meta {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.pp-dataset-meta strong {
+  font-weight: 600;
+  color: var(--rosf-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pp-dataset-meta small {
+  color: var(--rosf-muted);
+  font-family: var(--rosf-font-mono, ui-monospace, SFMono-Regular, Menlo, Consolas, monospace);
+  font-size: var(--rosf-text-xs, 11px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pp-aliases {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--rosf-radius);
+  background: var(--rosf-muted-bg, var(--rosf-hover));
+  color: var(--rosf-text-2);
+  font-size: var(--rosf-text-sm);
+}
+
+.pp-aliases code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.95em;
+}
+
+.pp-preview {
+  margin-top: var(--rosf-space-2);
+}
+
+/* Legacy class kept as alias for any leftover markup */
+.pp-sql-block {
+  margin: 0;
+}
+
+.pp-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  margin: 0 0 var(--rosf-space-3);
+  padding: 0;
+  list-style: none;
+  color: var(--rosf-muted);
+  font-size: var(--rosf-text-sm);
+}
+
+.pp-meta a {
+  color: var(--rosf-text-2);
+  text-underline-offset: 2px;
+}
+
+.pp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: var(--rosf-space-3);
+}
+
+/* Keep Preview / Send / Cancel visible under the tall DAG stage */
+.pp-actions-sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 6;
+  margin: var(--rosf-space-2) 0 0;
+  padding: 10px 0 12px;
+  background: linear-gradient(
+    to top,
+    var(--rosf-surface) 70%,
+    color-mix(in srgb, var(--rosf-surface) 85%, transparent)
+  );
+  border-top: 1px solid var(--rosf-border);
+}
+
+.pp-error,
+.pp-hint {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: var(--rosf-radius);
+  font-size: var(--rosf-text-sm);
+  line-height: 1.45;
+}
+
+.pp-error {
+  border: 1px solid color-mix(in srgb, var(--rosf-danger) 25%, transparent);
+  background: var(--rosf-danger-soft);
+  color: var(--rosf-danger-text);
+}
+
+.pp-hint {
+  border: 1px solid color-mix(in srgb, var(--rosf-warning) 28%, transparent);
+  background: var(--rosf-warning-soft);
+  color: var(--rosf-warning-text);
+}
+
+.pp-sync-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px 12px;
+  margin: 0 0 var(--rosf-space-2);
+  padding: 10px 12px;
+  border-radius: var(--rosf-radius);
+  border: 1px solid var(--rosf-border-strong);
+  background: var(--rosf-muted-bg, var(--rosf-hover));
+  color: var(--rosf-text-2);
+  font-size: var(--rosf-text-sm);
+  line-height: 1.45;
+}
+
+.pp-sync-banner p {
+  margin: 0;
+  flex: 1 1 220px;
+}
+
+@media (max-width: 640px) {
+  .pp-list a {
+    grid-template-columns: auto 1fr;
+  }
+  .pp-list .pp-chevron {
+    display: none;
+  }
+}
+
+/* Visual DAG editor — graph shell aligned with ontology explorer (og-*) */
+
+:root {
+  --pp-node-source: var(--rosf-accent);
+  --pp-node-select: #2a78d6;
+  --pp-node-filter: #eda100;
+  --pp-node-rename: #1baf7a;
+  --pp-node-cast: #4a3aa7;
+  --pp-node-derive: #e87ba4;
+  --pp-node-deduplicate: #008300;
+  --pp-node-join: var(--rosf-warning, #c99a3e);
+  --pp-node-aggregate: var(--rosf-warning, #c99a3e);
+  --pp-node-limit: #64748b;
+  --pp-node-sql: #eb6834;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --pp-node-select: #3987e5;
+    --pp-node-filter: #c98500;
+    --pp-node-rename: #199e70;
+    --pp-node-cast: #9085e9;
+    --pp-node-derive: #d55181;
+    --pp-node-deduplicate: #008300;
+    --pp-node-limit: #94a3b8;
+    --pp-node-sql: #d95926;
+  }
+}
+
+:root[data-theme="dark"] {
+  --pp-node-select: #3987e5;
+  --pp-node-filter: #c98500;
+  --pp-node-rename: #199e70;
+  --pp-node-cast: #9085e9;
+  --pp-node-derive: #d55181;
+  --pp-node-deduplicate: #008300;
+  --pp-node-limit: #94a3b8;
+  --pp-node-sql: #d95926;
+}
+
+.pp-dag {
+  display: grid;
+  gap: var(--rosf-space-2);
+  min-width: 0;
+}
+
+.pp-dag-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.pp-dag-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  flex: 1;
+  min-width: 0;
+}
+
+.pp-dag-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid var(--rosf-border);
+  border-radius: var(--rosf-radius-pill);
+  background: var(--rosf-surface);
+  color: var(--rosf-text);
+  font: inherit;
+  font-size: var(--rosf-text-sm);
+  cursor: pointer;
+}
+
+.pp-dag-type:hover {
+  background: var(--rosf-hover);
+}
+
+.pp-dag-type:focus-visible {
+  outline: 2px solid var(--rosf-accent);
+  outline-offset: 2px;
+}
+
+.pp-dag-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--rosf-faint);
+}
+
+.pp-dag-stage {
+  position: relative;
+  /* Leave room for name fields, tabs, and sticky Send/Preview actions */
+  height: clamp(360px, calc(100vh - 380px), 640px);
+  overflow: hidden;
+  border: 1px solid var(--rosf-border);
+  border-radius: var(--rosf-radius-lg);
+  background: var(--rosf-surface);
+}
+
+.pp-dag-canvas {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+
+.pp-dag-canvas .react-flow {
+  --xy-node-border-default: transparent;
+  --xy-node-background-color-default: transparent;
+}
+
+.pp-dag-empty {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  pointer-events: none;
+  background: color-mix(in srgb, var(--rosf-surface) 72%, transparent);
+}
+
+.pp-dag-empty .rosf-empty {
+  pointer-events: auto;
+  max-width: 360px;
+}
+
+.pp-dag-zoom {
+  position: absolute;
+  z-index: 5;
+  left: 12px;
+  bottom: 12px;
+  display: grid;
+  gap: 4px;
+}
+
+.pp-dag-minimap {
+  width: 128px !important;
+  height: 88px !important;
+  border: 1px solid var(--rosf-border) !important;
+  border-radius: var(--rosf-radius) !important;
+  background: var(--rosf-raised) !important;
+  box-shadow: var(--rosf-shadow-1);
+  overflow: hidden;
+}
+
+.pp-dag-minimap .react-flow__minimap-mask {
+  fill: color-mix(in srgb, var(--rosf-ink, #0f172a) 28%, transparent) !important;
+}
+
+.pp-dag-minimap .react-flow__minimap-svg {
+  background: color-mix(in srgb, var(--rosf-muted) 12%, var(--rosf-raised));
+}
+
+.pp-dag-minimap .pp-minimap-node {
+  fill: var(--rosf-muted);
+  stroke: var(--rosf-border-strong, var(--rosf-border));
+}
+
+.pp-dag-minimap .pp-minimap-source {
+  fill: var(--pp-node-source);
+  stroke: color-mix(in srgb, var(--pp-node-source) 70%, var(--rosf-ink, #0f172a));
+}
+
+.pp-dag-minimap .pp-minimap-select {
+  fill: var(--pp-node-select);
+}
+
+.pp-dag-minimap .pp-minimap-filter {
+  fill: var(--pp-node-filter);
+}
+
+.pp-dag-minimap .pp-minimap-rename {
+  fill: var(--pp-node-rename);
+}
+
+.pp-dag-minimap .pp-minimap-cast {
+  fill: var(--pp-node-cast);
+}
+
+.pp-dag-minimap .pp-minimap-derive {
+  fill: var(--pp-node-derive);
+}
+
+.pp-dag-minimap .pp-minimap-deduplicate {
+  fill: var(--pp-node-deduplicate);
+}
+
+.pp-dag-minimap .pp-minimap-join,
+.pp-dag-minimap .pp-minimap-aggregate {
+  fill: var(--pp-node-join);
+  stroke: color-mix(in srgb, var(--pp-node-join) 65%, #000);
+}
+
+.pp-dag-minimap .pp-minimap-limit {
+  fill: var(--pp-node-limit);
+}
+
+.pp-dag-minimap .pp-minimap-sql {
+  fill: var(--pp-node-sql);
+}
+
+.pp-dag-node {
+  min-width: 140px;
+  max-width: 200px;
+  padding: 10px 12px;
+  border: 1px solid var(--rosf-border);
+  border-left-width: 3px;
+  border-left-style: solid;
+  border-radius: var(--rosf-radius);
+  background: var(--rosf-field, var(--rosf-raised));
+  box-shadow: var(--rosf-shadow-1);
+  cursor: grab;
+  transition:
+    border-color var(--rosf-duration) var(--rosf-ease),
+    box-shadow var(--rosf-duration) var(--rosf-ease);
+}
+
+.pp-dag-node:hover {
+  border-top-color: var(--rosf-border-strong);
+  border-right-color: var(--rosf-border-strong);
+  border-bottom-color: var(--rosf-border-strong);
+}
+
+.pp-dag-node.is-selected {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--rosf-accent) 22%, transparent),
+    var(--rosf-shadow-1);
+}
+
+.pp-dag-node strong {
+  display: block;
+  font-size: var(--rosf-text-sm);
+  font-weight: 600;
+  color: var(--rosf-text);
+}
+
+.pp-dag-node small {
+  display: block;
+  margin-top: 4px;
+  color: var(--rosf-muted);
+  font-size: 11px;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pp-dag-handle {
+  width: 12px !important;
+  height: 12px !important;
+  min-width: 12px !important;
+  min-height: 12px !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  background: var(--rosf-text-2) !important;
+  border: 2px solid var(--rosf-raised) !important;
+  z-index: 2;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.pp-dag-handle:hover,
+.pp-dag-handle:focus-visible,
+.pp-dag-handle.connectingfrom,
+.pp-dag-handle.connectingto,
+.pp-dag-handle.valid,
+.react-flow__handle.connectingfrom,
+.react-flow__handle.connectingto,
+.react-flow__handle.valid {
+  background: var(--rosf-accent) !important;
+}
+
+.pp-dag-handle:focus-visible {
+  outline: 2px solid var(--rosf-accent);
+  outline-offset: 2px;
+}
+
+/*
+ * Fine-pointer + hover: hide handles until hover/selection/connect.
+ * Coarse pointers (touch): keep handles visible — hover-only fails on tap.
+ */
+@media (hover: hover) and (pointer: fine) {
+  .pp-dag-handle {
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      opacity var(--rosf-duration) var(--rosf-ease),
+      background var(--rosf-duration) var(--rosf-ease);
+  }
+
+  /* xyflow v12 uses connectingfrom/connectingto/valid — not handle-connecting/valid */
+  .react-flow__node:hover .pp-dag-handle,
+  .react-flow__node.selected .pp-dag-handle,
+  .react-flow__node:focus-within .pp-dag-handle,
+  .pp-dag-node.is-selected .pp-dag-handle,
+  .pp-dag-handle:focus-visible,
+  .pp-dag-handle.connectingfrom,
+  .pp-dag-handle.connectingto,
+  .pp-dag-handle.valid,
+  .react-flow__handle.connectingfrom,
+  .react-flow__handle.connectingto,
+  .react-flow__handle.valid {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.pp-dag-panel {
+  position: absolute;
+  z-index: 4;
+  top: 12px;
+  right: 12px;
+  bottom: 12px;
+  width: 300px;
+  display: grid;
+  gap: var(--rosf-space-2);
+  align-content: start;
+  overflow: auto;
+  padding: 14px;
+  border: 1px solid var(--rosf-border);
+  border-radius: var(--rosf-radius-lg);
+  background: var(--rosf-surface);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.12);
+}
+
+.pp-dag-panel header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.pp-dag-panel header .pp-dag-dot {
+  margin-top: 6px;
+}
+
+.pp-dag-panel header > div:first-of-type {
+  flex: 1;
+  min-width: 0;
+}
+
+.pp-dag-panel h2 {
+  margin: 0;
+  font-size: var(--rosf-text-md);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.pp-dag-panel-actions {
+  display: flex;
+  flex: none;
+  gap: 4px;
+}
+
+.pp-dag-id {
+  margin: 2px 0 0;
+  color: var(--rosf-muted);
+  font-size: var(--rosf-text-xs);
+}
+
+.pp-dag-id code {
+  font-family: var(--rosf-font-mono);
+}
+
+.pp-dag-panel section {
+  margin-top: 4px;
+}
+
+.pp-dag-panel h3 {
+  margin: 0 0 4px;
+  color: var(--rosf-text-2);
+  font-size: var(--rosf-text-xs);
+  font-weight: 600;
+}
+
+.pp-dag-panel textarea.pp-sql {
+  min-height: 100px;
+}
+
+.pp-dag-panel .pp-aliases {
+  margin: 0;
+  color: var(--rosf-muted);
+  font-size: var(--rosf-text-sm);
+  line-height: 1.45;
+}
+
+@media (max-width: 720px) {
+  .pp-dag-stage {
+    height: clamp(280px, calc(100vh - 320px), 480px);
+  }
+
+  .pp-dag-panel {
+    top: auto;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    width: auto;
+    max-height: 55%;
+  }
+
+  .pp-dag-zoom {
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-list a {
+    transition: none;
+  }
+
+  .pp-dag-node,
+  .pp-dag-handle {
+    transition: none;
+  }
+}

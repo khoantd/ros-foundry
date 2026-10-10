@@ -32,7 +32,7 @@ import { registerPipelinesRoutes } from "./routes/pipelines.js";
 import { recordLabel, registerOntologyRoutes } from "./routes/ontology.js";
 import { registerAnalystRoutes } from "./routes/analyst.js";
 import { registerWorkspaceRoutes } from "./routes/workspace.js";
-// Helix Foundry runs on one computer for one person, with no sign-in. That
+// ROS Foundry runs on one computer for one person, with no sign-in. That
 // person is the installation's owner; their session never expires because
 // provider sign-in (hosting.ts) is bound to a session.
 const LOCAL_USER = "local-user",
@@ -95,7 +95,7 @@ export async function createApp(store: Store) {
   await app.register(swagger, {
     transform: openapiTransform,
     openapi: {
-      info: { title: "Helix Foundry API", version: "0.1.0" },
+      info: { title: "ROS Foundry API", version: "0.1.0" },
       components: {
         securitySchemes: {
           token: { type: "http", scheme: "bearer" },
@@ -226,7 +226,7 @@ export async function createApp(store: Store) {
             : resource(
                 "global",
                 "installation",
-                "Helix Foundry",
+                "ROS Foundry",
                 { ownerId: u.id },
                 "installation",
               ),
@@ -266,7 +266,7 @@ export async function createApp(store: Store) {
       await newWorkspace(identity.user, "My workspace");
     return identity;
   }
-  app.get("/api/health", async () => ({ ok: true, service: "helix-foundry" }));
+  app.get("/api/health", async () => ({ ok: true, service: "ros-foundry" }));
   app.get("/api/v1/me", async (req) => {
     const a = await user(req),
       members = (await store.list("global", "member")).filter(

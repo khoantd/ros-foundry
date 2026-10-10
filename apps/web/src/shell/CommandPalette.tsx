@@ -281,16 +281,16 @@ export function CommandPalette({
   return (
     <dialog
       ref={dialog}
-      className="hf-palette"
+      className="rosf-palette"
       aria-label="Search your workspace"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="hf-palette-card">
-        <div className="hf-palette-input">
+      <div className="rosf-palette-card">
+        <div className="rosf-palette-input">
           {loading && q ? (
-            <LoaderCircle size={17} className="hf-spin" aria-hidden />
+            <LoaderCircle size={17} className="rosf-spin" aria-hidden />
           ) : (
             <Search size={17} aria-hidden />
           )}
@@ -325,10 +325,10 @@ export function CommandPalette({
               }
             }}
           />
-          <kbd className="hf-palette-esc" aria-hidden>
+          <kbd className="rosf-palette-esc" aria-hidden>
             esc
           </kbd>
-          <button type="button" className="hf-palette-cancel" onClick={onClose}>
+          <button type="button" className="rosf-palette-cancel" onClick={onClose}>
             Cancel
           </button>
         </div>
@@ -337,11 +337,11 @@ export function CommandPalette({
           id={listId}
           role="listbox"
           aria-label="Results"
-          className="hf-palette-list"
+          className="rosf-palette-list"
         >
           {Object.entries(groups).map(([group, items]) => (
             <div key={group} role="group" aria-label={group}>
-              <div className="hf-palette-group" aria-hidden>
+              <div className="rosf-palette-group" aria-hidden>
                 {group}
               </div>
               {items.map(([e, i]) => (
@@ -353,7 +353,7 @@ export function CommandPalette({
                   aria-selected={i === active}
                   aria-disabled={e.disabled || undefined}
                   className={cx(
-                    "hf-palette-option",
+                    "rosf-palette-option",
                     i === active && "is-active",
                     e.disabled && "is-disabled",
                   )}
@@ -361,9 +361,9 @@ export function CommandPalette({
                   onClick={() => !e.disabled && e.run()}
                 >
                   <e.icon size={16} aria-hidden />
-                  <span className="hf-palette-title">{e.title}</span>
+                  <span className="rosf-palette-title">{e.title}</span>
                   {e.subtitle && (
-                    <span className="hf-palette-subtitle">{e.subtitle}</span>
+                    <span className="rosf-palette-subtitle">{e.subtitle}</span>
                   )}
                   {i === active && !e.disabled ? (
                     <CornerDownLeft size={14} aria-hidden />
@@ -375,12 +375,12 @@ export function CommandPalette({
             </div>
           ))}
           {!entries.length && (
-            <p className="hf-palette-empty">
+            <p className="rosf-palette-empty">
               {loading ? "Searching…" : `No results for “${query}”`}
             </p>
           )}
         </div>
-        <div className="hf-palette-foot" aria-hidden>
+        <div className="rosf-palette-foot" aria-hidden>
           <span>
             <kbd>↑</kbd>
             <kbd>↓</kbd> to navigate

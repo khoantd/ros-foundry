@@ -165,17 +165,17 @@ function AskBox({ summary }: { summary?: HomeSummary }) {
           disabled={pending || text.trim().length < 5}
         >
           {pending ? (
-            <LoaderCircle size={17} className="hf-spin" aria-hidden />
+            <LoaderCircle size={17} className="rosf-spin" aria-hidden />
           ) : (
             <ArrowUp size={17} aria-hidden />
           )}
         </button>
       </div>
-      <span id={hintId} className="hf-sr-only">
+      <span id={hintId} className="rosf-sr-only">
         Press Enter to ask. Shift+Enter adds a new line.
       </span>
       {/* The spinner shows progress; this tells screen readers. */}
-      <span className="hf-sr-only" aria-live="polite">
+      <span className="rosf-sr-only" aria-live="polite">
         {pending ? "Starting a chat…" : ""}
       </span>
       <div className="wk-suggestions" aria-label="Suggested questions">
@@ -412,7 +412,7 @@ function OntologyPanel({ s }: { s?: HomeSummary }) {
               <li key={t.id}>
                 <Link to={paths.objectType(t.typeId)}>
                   <span className="wk-type-name">{t.name}</span>
-                  <span className="wk-type-count hf-num">
+                  <span className="wk-type-count rosf-num">
                     {formatNumber(t.objects)}
                   </span>
                   <span className="wk-type-bar" aria-hidden>
@@ -452,7 +452,7 @@ function Attention({ s }: { s?: HomeSummary }) {
       icon: Workflow,
       text: `${p.name} failed to build`,
       detail: p.error,
-      to: paths.data(),
+      to: paths.pipeline(p.pipelineId),
     })),
     ...s.findings.items.map((f) => ({
       key: "f" + f.id,

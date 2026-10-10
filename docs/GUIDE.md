@@ -1,6 +1,6 @@
-# Helix Foundry guide
+# ROS Foundry guide
 
-This guide is the detailed companion to the [README](../README.md). It covers what Helix Foundry does, how to connect each kind of source, how AI and review work, how the services fit together, and how to develop and test the code. To install it, start with the README or the [agent runbook](../AGENTS.md). To run an installation day to day, see [operations](OPERATIONS.md).
+This guide is the detailed companion to the [README](../README.md). It covers what ROS Foundry does, how to connect each kind of source, how AI and review work, how the services fit together, and how to develop and test the code. To install it, start with the README or the [agent runbook](../AGENTS.md). To run an installation day to day, see [operations](OPERATIONS.md).
 
 ## Contents
 
@@ -24,7 +24,7 @@ This guide is the detailed companion to the [README](../README.md). It covers wh
 
 ## Features
 
-Helix Foundry is an AI-assisted data workspace that runs on your own computer, built on HelixDB and DuckDB. You connect data, confirm a suggested ontology or describe an outcome, inspect tested proposals, and publish a shared ontology with key metrics on Home. Local inference is the default; Claude and OpenAI are explicit alternatives.
+ROS Foundry is an AI-assisted data workspace that runs on your own computer, built on HelixDB and DuckDB. You connect data, confirm a suggested ontology or describe an outcome, inspect tested proposals, and publish a shared ontology with key metrics on Home. Local inference is the default; Claude and OpenAI are explicit alternatives.
 
 - **Sources:** PostgreSQL and MySQL discovery and streamed snapshot ingestion, sign-in for Neon, Supabase and PlanetScale, Stripe, WorkOS and PostHog, REST pagination, S3-compatible file imports, CSV, JSON, JSONL and Parquet uploads, and a batch ingestion API.
 - **Data:** immutable Parquet snapshots, profiles, key candidates, sensitivity hints, schema-drift review, version history and exports.
@@ -38,11 +38,12 @@ Helix Foundry is an AI-assisted data workspace that runs on your own computer, b
 
 ## Finding your way around
 
-The sidebar has **Home**, **Ontology**, **Data** and **Analyst**, with **Settings** at the bottom. Switch workspaces from the menu at the top of the sidebar.
+The sidebar has **Home**, **Ontology**, **Data**, **Pipelines** and **Analyst**, with **Settings** at the bottom. Switch workspaces from the menu at the top of the sidebar.
 
 - **Home** shows the workspace's key metrics: growth and analytics metrics picked by AI from your datasets' schemas, or by code until AI is set up. They are recomputed only when an input dataset gets a new version. Ask anything about your data from the box at the top. Home also shows connections, data health, items that need attention, where you left off, and an overview of the ontology. Old dashboard links open Home.
 - **Ontology** opens on the **Explorer**, which shows your records and how they connect, as a graph or a table. **Object types** lists the published business types. Open a record to see its related records and source history. Edits to a record need a before and after preview and explicit application. Workspace edits do not change imported snapshots, Home's metrics or source systems. Old `/records` links open the Explorer.
 - **Data** brings every connection option into one **Add data** flow. Open a dataset to see a sample, and expand **Details** for schemas, profiles, versions, lineage, exports and connection settings. The old Advanced page now opens Data.
+- **Pipelines** lists published transformations, lets you run a rebuild, and opens a SQL editor to draft a new or revised pipeline as a reviewable proposal (publish from **Proposals**).
 - **Analyst** holds your chats with the assistant. The assistant decides whether a request needs an executed answer or a tested proposal. Follow-ups keep the selected resource. Routing uses the same model-call and token budget as the rest of the run, and a saved routing decision is reused on resume when the inputs are unchanged. Read-only API tokens can investigate but cannot create definitions or change records.
 - **Proposals** (`/proposals`) is where definitions from the assistant wait for review before publication. Guided setup publishes its validated build of the confirmed ontology automatically.
 - **Settings** has **AI & models** (choose Local, Claude or OpenAI and enter an API key) and **Developer tools** (API tokens). Other AI settings are set through the API; see [AI and review](#ai-and-review).
@@ -53,7 +54,7 @@ While a workspace's setup is incomplete, opening the app goes straight to setup.
 
 1. **AI.** Choose **Local** (the default, using `qwen3:4b`), **Claude** or **OpenAI**. Claude and OpenAI need an API key, and their default models are `claude-sonnet-4-6` and `gpt-5.4-mini`. **Continue** opens the Data step straight away, and the provider is prepared in the background. For Local, the app checks the release-pinned model, downloads it through Ollama if it is missing, verifies its digest and tests structured output. If preparation fails, the later steps show the error with **Retry AI connection** and **Change AI choice**. Setup still works without AI; AI only adds descriptions.
 2. **Data.** Connect your sources and let them import completely, or choose **Continue with sample data**. Nothing is seeded automatically.
-3. **Ontology.** Helix Foundry computes a suggested ontology from the data: entities consolidated across sources by matching keys, and the links between them. The suggestion is deterministic. When AI is ready, a background run rewrites only its summary, descriptions and link names. Rename or exclude entities, then click **Looks right — build my workspace**. The build runs as code without model calls, shows its progress in plain stages, and publishes the workspace. Home then opens with key metrics.
+3. **Ontology.** ROS Foundry computes a suggested ontology from the data: entities consolidated across sources by matching keys, and the links between them. The suggestion is deterministic. When AI is ready, a background run rewrites only its summary, descriptions and link names. Rename or exclude entities, then click **Looks right — build my workspace**. The build runs as code without model calls, shows its progress in plain stages, and publishes the workspace. Home then opens with key metrics.
 
 Progress is saved on the server. If you close the browser, background work continues, and reopening the app returns you to the same step.
 
@@ -102,9 +103,9 @@ Stripe, WorkOS and PostHog appear beside the database hosts in **Add data**.
 
 ### Sync and change capture
 
-Database imports automatically try PostgreSQL logical replication or MySQL row-binlog capture. Foundry creates its own PostgreSQL publication and slot when permitted, and never modifies server-wide settings. Native change capture coalesces committed changes into complete, bounded-memory snapshot imports, including updates, deletes and truncations. This release does not yet apply row deltas directly, so large or rapidly changing tables may lag during materialisation.
+Database imports automatically try PostgreSQL logical replication or MySQL row-binlog capture. Foundry creates its own PostgreSQL publication and slot when permitted, and never modifies server-wide settings. Committed row changes are journaled and applied as primary-key deltas onto the active parquet snapshot when safe (bounded op count, contiguous change coverage, and no truncate/DDL). Truncations, schema changes, reconnects, missing keys, or oversized batches fall back to a complete snapshot import.
 
-If replication is unavailable, snapshots refresh every five minutes (or on an existing UTC schedule set through the API), with a visible reason and automatic retries. REST and S3 sources also use snapshot refreshes; uploads stay explicit. Schema changes are staged for review. Business record overrides and publication protections remain separate. Writing back to sources, per-row AI enrichment and distributed compute are not supported yet.
+If replication is unavailable, snapshots refresh every five minutes (or on a UTC schedule you set on the connection page or through the API), with a visible reason and automatic retries. REST and S3 sources also use snapshot refreshes; uploads stay explicit. From a connection you can pause automatic sync, change the schedule, or run Sync now. Schema changes are staged for review. Business record overrides and publication protections remain separate. Writing back to sources, per-row AI enrichment and distributed compute are not supported yet.
 
 [Operations](OPERATIONS.md) lists the database permissions change capture needs and how to manage WAL and binlog retention.
 
@@ -140,9 +141,9 @@ Data lives in three Docker volumes:
 
 | Volume                       | Contents                                                                           |
 | ---------------------------- | ---------------------------------------------------------------------------------- |
-| `helix-foundry_helix-data`   | HelixDB metadata: workspaces, ontology, jobs, API tokens and encrypted credentials |
-| `helix-foundry_foundry-data` | Parquet snapshots, artifacts and staged uploads                                    |
-| `helix-foundry_model-data`   | Ollama model weights (not backed up; they can be downloaded again)                 |
+| `ros-foundry_helix-data`   | HelixDB metadata: workspaces, ontology, jobs, API tokens and encrypted credentials |
+| `ros-foundry_foundry-data` | Parquet snapshots, artifacts and staged uploads                                    |
+| `ros-foundry_model-data`   | Ollama model weights (not backed up; they can be downloaded again)                 |
 
 **HelixDB.** Queries use the HelixDB TypeScript SDK 3.2 and `/v2/query`. A scope revision is compared and advanced inside each write batch, so stale metadata writes fail as a unit. Dataset artifacts and staged ontology generations stay invisible until the publication pointer changes. Source imports remain separate from manual object overlays.
 
@@ -150,7 +151,7 @@ Data lives in three Docker volumes:
 
 ## Security
 
-Helix Foundry is local-first: one person per computer, with no accounts and no sign-in. Because of that, the API only listens on this computer.
+ROS Foundry is local-first: one person per computer, with no accounts and no sign-in. Because of that, the API only listens on this computer.
 
 - `HOST` must be a loopback address unless `ALLOW_NETWORK_ACCESS=true`. Compose sets that flag because it publishes the port on `127.0.0.1` only.
 - Do not expose the app to a network or put it behind a reverse proxy, tunnel or port forward. HelixDB, Ollama and the executor must remain private.
@@ -167,8 +168,8 @@ Use Node.js 24, pnpm 10.7 and Docker. Native Ollama is optional, and useful on A
 pnpm install
 ./scripts/setup.sh
 # HelixDB on 6996. Use a port not occupied by another Helix project.
-docker run -d --name helix-foundry-dev -p 127.0.0.1:6996:8080 \
-  -e HELIX_DATA_DIR=/var/lib/helix -v helix-foundry-dev:/var/lib/helix \
+docker run -d --name ros-foundry-dev -p 127.0.0.1:6996:8080 \
+  -e HELIX_DATA_DIR=/var/lib/helix -v ros-foundry-dev:/var/lib/helix \
   ghcr.io/helixdb/helixdb:v0.0.6@sha256:94b29942658ebdca0a91bf15edffe921a46da3e26e1223ea333ccce58c6212dd
 ollama serve &   # or run it in its own terminal; skip if Ollama is already running
 # Optional: the app also pulls the model when you choose Local.
@@ -207,8 +208,8 @@ BENCH_HTTP=1 pnpm benchmark  # 1M rows, 25 concurrent executor clients
 ## Backups and upgrades
 
 ```sh
-./scripts/backup.sh ~/helix-foundry-backups/$(date +%Y%m%d-%H%M%S)   # stops writers, snapshots volumes, restarts
-./scripts/restore.sh ~/helix-foundry-backups/TIMESTAMP --replace
+./scripts/backup.sh ~/ros-foundry-backups/$(date +%Y%m%d-%H%M%S)   # stops writers, snapshots volumes, restarts
+./scripts/restore.sh ~/ros-foundry-backups/TIMESTAMP --replace
 ```
 
 Backups contain the encryption key, so keep them private and outside the repository. Restore explicitly replaces the selected installation's data and `.env`. Before an upgrade, back up, keep the old commit, lockfile and image, rebuild, and run smoke checks (diagnostics, sample ingestion, a saved query and proposal validation) before using the installation again. Never remove volumes during an ordinary upgrade.

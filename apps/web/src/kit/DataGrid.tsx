@@ -209,10 +209,10 @@ export function DataGrid<Row extends Record<string, any>>({
   };
 
   return (
-    <div className={cx("hf-grid-wrap", className)}>
+    <div className={cx("rosf-grid-wrap", className)}>
       <div
         ref={scroller}
-        className="hf-grid"
+        className="rosf-grid"
         role="grid"
         aria-label={label}
         aria-rowcount={sorted.length + 1}
@@ -221,15 +221,15 @@ export function DataGrid<Row extends Record<string, any>>({
         style={
           {
             maxHeight,
-            "--hf-grid-template": template,
-            "--hf-grid-row": rowHeight + "px",
+            "--rosf-grid-template": template,
+            "--rosf-grid-row": rowHeight + "px",
           } as CSSProperties
         }
         onScroll={onScroll}
       >
-        <div className="hf-grid-inner" style={{ minWidth }}>
+        <div className="rosf-grid-inner" style={{ minWidth }}>
           <div
-            className="hf-grid-row hf-grid-head"
+            className="rosf-grid-row rosf-grid-head"
             role="row"
             aria-rowindex={1}
           >
@@ -249,7 +249,7 @@ export function DataGrid<Row extends Record<string, any>>({
                         : "descending"
                       : undefined
                   }
-                  className={cx("hf-grid-th", `is-${c.align}`)}
+                  className={cx("rosf-grid-th", `is-${c.align}`)}
                 >
                   <button
                     type="button"
@@ -257,7 +257,7 @@ export function DataGrid<Row extends Record<string, any>>({
                     onClick={() => toggle(c.key)}
                     title={c.type || c.kind}
                   >
-                    <Icon size={12} className="hf-grid-type" aria-hidden />
+                    <Icon size={12} className="rosf-grid-type" aria-hidden />
                     <span>{c.label ?? c.key}</span>
                     {active &&
                       (sort!.dir === "asc" ? (
@@ -272,16 +272,16 @@ export function DataGrid<Row extends Record<string, any>>({
           </div>
           {loading ? (
             Array.from({ length: 6 }, (_, i) => (
-              <div key={i} className="hf-grid-row" role="row">
+              <div key={i} className="rosf-grid-row" role="row">
                 {cols.map((c) => (
-                  <div key={c.key} className="hf-grid-td" role="gridcell">
-                    <span className="hf-skeleton" style={{ width: "70%" }} />
+                  <div key={c.key} className="rosf-grid-td" role="gridcell">
+                    <span className="rosf-skeleton" style={{ width: "70%" }} />
                   </div>
                 ))}
               </div>
             ))
           ) : !sorted.length ? (
-            <div className="hf-grid-empty" role="row">
+            <div className="rosf-grid-empty" role="row">
               <div role="gridcell">{emptyText}</div>
             </div>
           ) : (
@@ -302,7 +302,7 @@ export function DataGrid<Row extends Record<string, any>>({
                     }
                     tabIndex={onRowClick ? 0 : undefined}
                     className={cx(
-                      "hf-grid-row",
+                      "rosf-grid-row",
                       onRowClick && "is-clickable",
                       selectedKey === key && "is-selected",
                     )}
@@ -320,7 +320,7 @@ export function DataGrid<Row extends Record<string, any>>({
                           role="gridcell"
                           aria-colindex={ci + 1}
                           className={cx(
-                            "hf-grid-td",
+                            "rosf-grid-td",
                             `is-${c.align}`,
                             `is-${c.kind}`,
                           )}
@@ -329,7 +329,7 @@ export function DataGrid<Row extends Record<string, any>>({
                           {c.render ? (
                             c.render(r, value)
                           ) : text === null ? (
-                            <span className="hf-null">null</span>
+                            <span className="rosf-null">null</span>
                           ) : (
                             text
                           )}
@@ -347,7 +347,7 @@ export function DataGrid<Row extends Record<string, any>>({
           )}
         </div>
       </div>
-      {footer && <div className="hf-grid-foot">{footer}</div>}
+      {footer && <div className="rosf-grid-foot">{footer}</div>}
     </div>
   );
 }

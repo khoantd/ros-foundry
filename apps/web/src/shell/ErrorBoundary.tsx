@@ -40,7 +40,7 @@ export class RouteErrorBoundary extends Component<
             }
             text={
               stale
-                ? "Reload to get the latest version of Helix Foundry."
+                ? "Reload to get the latest version of ROS Foundry."
                 : error.message ||
                   "Something went wrong while showing this page."
             }
@@ -97,7 +97,7 @@ export function NotFound() {
   const shell = useShell();
   return (
     <Page width="narrow">
-      <h1 className="hf-sr-only">Page not found</h1>
+      <h1 className="rosf-sr-only">Page not found</h1>
       <EmptyState
         size="lg"
         icon={Compass}

@@ -73,6 +73,40 @@ it("executes visual selection, renaming, casting, filtering, derivation, dedupli
     db.closeSync();
   }
 });
+it("compiles LIMIT and OFFSET nodes", () => {
+  const limited = compilePipeline(
+    [
+      { id: "s", type: "source", datasetId: "orders", inputs: [] },
+      { id: "l", type: "limit", inputs: ["s"], config: { limit: 100 } },
+    ].map((n) => PipelineNodeSchema.parse(n)),
+  );
+  expect(limited.sql).toMatch(/LIMIT 100/);
+  expect(limited.sql).not.toMatch(/OFFSET/);
+
+  const both = compilePipeline(
+    [
+      { id: "s", type: "source", datasetId: "orders", inputs: [] },
+      {
+        id: "l",
+        type: "limit",
+        inputs: ["s"],
+        config: { limit: 10, offset: 5 },
+      },
+    ].map((n) => PipelineNodeSchema.parse(n)),
+  );
+  expect(both.sql).toMatch(/LIMIT 10/);
+  expect(both.sql).toMatch(/OFFSET 5/);
+
+  const offsetOnly = compilePipeline(
+    [
+      { id: "s", type: "source", datasetId: "orders", inputs: [] },
+      { id: "l", type: "limit", inputs: ["s"], config: { offset: 5 } },
+    ].map((n) => PipelineNodeSchema.parse(n)),
+  );
+  expect(offsetOnly.sql).toMatch(/OFFSET 5/);
+  expect(offsetOnly.sql).not.toMatch(/LIMIT/);
+});
+
 it("rejects cyclic, disconnected and dangling graphs", () => {
   for (const nodes of [
     [{ id: "a", type: "filter", inputs: ["a"], config: { condition: "true" } }],

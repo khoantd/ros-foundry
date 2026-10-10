@@ -95,14 +95,14 @@ export function StatusBadge({
   return (
     <span
       className={cx(
-        "hf-status",
-        `hf-status--${status}`,
-        `hf-tone--${m.tone}`,
-        size === "sm" && "hf-status--sm",
+        "rosf-status",
+        `rosf-status--${status}`,
+        `rosf-tone--${m.tone}`,
+        size === "sm" && "rosf-status--sm",
         className,
       )}
     >
-      <span className={cx("hf-status-dot", m.live && "is-live")} aria-hidden />
+      <span className={cx("rosf-status-dot", m.live && "is-live")} aria-hidden />
       {label ?? m.label}
     </span>
   );
@@ -118,7 +118,7 @@ export function StatusDot({
   const m = meta[status];
   return (
     <span
-      className={cx("hf-status-dot", `hf-tone--${m.tone}`, m.live && "is-live")}
+      className={cx("rosf-status-dot", `rosf-tone--${m.tone}`, m.live && "is-live")}
       role="img"
       aria-label={label ?? m.label}
       title={label ?? m.label}
@@ -138,7 +138,7 @@ export function Tag({
   className?: string;
 }) {
   return (
-    <span className={cx("hf-tag", `hf-tone--${tone}`, className)}>
+    <span className={cx("rosf-tag", `rosf-tone--${tone}`, className)}>
       {Icon && <Icon size={12} aria-hidden />}
       {children}
     </span>

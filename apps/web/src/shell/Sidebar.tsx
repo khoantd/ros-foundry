@@ -59,7 +59,7 @@ function Badge({ badge, id }: { badge?: NavBadge; id: string }) {
   if (!badge || n <= 0) return null;
   return (
     <>
-      <span className="hf-nav-badge" aria-hidden>
+      <span className="rosf-nav-badge" aria-hidden>
         {n}
       </span>
       <span id={id} hidden>
@@ -81,7 +81,7 @@ function SettingsLink() {
     <Link
       to={paths.settings()}
       className={cx(
-        "hf-btn hf-btn--ghost hf-btn--md hf-btn--icon hf-settings-link",
+        "rosf-btn rosf-btn--ghost rosf-btn--md rosf-btn--icon rosf-settings-link",
         active && "is-active",
       )}
       aria-label="Settings"
@@ -111,7 +111,7 @@ function NavLink({
   return (
     <Link
       to={n.to}
-      className={cx("hf-nav-link", active && "is-active")}
+      className={cx("rosf-nav-link", active && "is-active")}
       aria-current={
         active && (pathname === n.to || !(nested || n.children?.length))
           ? "page"
@@ -121,7 +121,7 @@ function NavLink({
       title={collapsed ? n.label : undefined}
     >
       <n.icon size={17} aria-hidden />
-      <span className="hf-nav-text">{n.label}</span>
+      <span className="rosf-nav-text">{n.label}</span>
       <Badge badge={n.badge} id={id} />
     </Link>
   );
@@ -138,7 +138,7 @@ function SubLink({
   return (
     <Link
       to={c.to}
-      className={cx("hf-subnav-link", on && "is-active")}
+      className={cx("rosf-subnav-link", on && "is-active")}
       aria-current={on ? "page" : undefined}
       aria-describedby={badged ? id : undefined}
     >
@@ -165,15 +165,15 @@ function ChatLink({
     <Link
       to={paths.thread(chat.id)}
       onClick={onNavigate}
-      className={cx("hf-chat-link", on && "is-active")}
+      className={cx("rosf-chat-link", on && "is-active")}
       aria-current={on ? "page" : undefined}
       aria-describedby={busy ? id : undefined}
       title={chat.title}
     >
-      <span className="hf-chat-title">{chat.title}</span>
+      <span className="rosf-chat-title">{chat.title}</span>
       {busy && (
         <>
-          <span className="hf-chat-dot" aria-hidden />
+          <span className="rosf-chat-dot" aria-hidden />
           <span id={id} hidden>
             Answering
           </span>
@@ -202,19 +202,19 @@ function ChatHistory({
     listId = useId();
   if (chats.isPending)
     return (
-      <div className="hf-chats" aria-hidden>
-        <Skeleton width="78%" height={10} className="hf-chats-skeleton" />
-        <Skeleton width="56%" height={10} className="hf-chats-skeleton" />
+      <div className="rosf-chats" aria-hidden>
+        <Skeleton width="78%" height={10} className="rosf-chats-skeleton" />
+        <Skeleton width="56%" height={10} className="rosf-chats-skeleton" />
       </div>
     );
   if (chats.error)
     return (
-      <div className="hf-chats">
-        <p className="hf-chats-note">
+      <div className="rosf-chats">
+        <p className="rosf-chats-note">
           Couldn’t load chats.{" "}
           <button
             type="button"
-            className="hf-chats-toggle"
+            className="rosf-chats-toggle"
             onClick={() => void chats.refetch()}
           >
             Retry
@@ -225,8 +225,8 @@ function ChatHistory({
   const items = chats.data.items;
   if (!items.length)
     return (
-      <div className="hf-chats">
-        <p className="hf-chats-note">Ask on Home to start a chat</p>
+      <div className="rosf-chats">
+        <p className="rosf-chats-note">Ask on Home to start a chat</p>
       </div>
     );
   const open = items.find((c) => pathname === paths.thread(c.id));
@@ -234,7 +234,7 @@ function ChatHistory({
   // The open chat stays listed, even when it is older than the first few.
   if (open && !shown.includes(open)) shown = [...shown, open];
   return (
-    <div className="hf-chats">
+    <div className="rosf-chats">
       <ul id={listId} aria-label="Chats">
         {shown.map((c) => (
           <li key={c.id}>
@@ -245,7 +245,7 @@ function ChatHistory({
       {items.length > CHAT_LIMIT && (
         <button
           type="button"
-          className="hf-chats-toggle"
+          className="rosf-chats-toggle"
           aria-expanded={all}
           aria-controls={listId}
           onClick={() => setAll(!all)}
@@ -272,12 +272,12 @@ function NavLinks({
   const { pathname } = useLocation(),
     section = activeSection(pathname);
   return (
-    <ul className="hf-nav-list" aria-label={label}>
+    <ul className="rosf-nav-list" aria-label={label}>
       {items.map((n) => {
         const active = section === n.id,
           chats = n.id === "analyst" && !collapsed;
         return (
-          <li key={n.id} className={chats ? "hf-nav-item--chats" : undefined}>
+          <li key={n.id} className={chats ? "rosf-nav-item--chats" : undefined}>
             <NavLink
               n={n}
               active={active}
@@ -292,7 +292,7 @@ function NavLinks({
                   to={paths.home()}
                   state={{ ask: true }}
                   onClick={onNavigate}
-                  className="hf-btn hf-btn--ghost hf-btn--sm hf-btn--icon hf-nav-action"
+                  className="rosf-btn rosf-btn--ghost rosf-btn--sm rosf-btn--icon rosf-nav-action"
                   aria-label="New chat"
                   title="New chat"
                 >
@@ -302,7 +302,7 @@ function NavLinks({
               </>
             )}
             {active && !collapsed && !!n.children?.length && (
-              <ul className="hf-subnav">
+              <ul className="rosf-subnav">
                 {n.children.map((c) => (
                   <li key={c.to}>
                     <SubLink c={c} on={childActive(pathname, c)} />
@@ -336,19 +336,19 @@ function WorkspaceSwitcher({
     <>
       <DropdownMenu
         label={`Workspace: ${current.name}`}
-        className="hf-switcher"
-        triggerClassName="hf-switcher-trigger"
+        className="rosf-switcher"
+        triggerClassName="rosf-switcher-trigger"
         trigger={
           <>
-            <span className="hf-ws-mark" aria-hidden>
+            <span className="rosf-ws-mark" aria-hidden>
               {initials(current.name)}
             </span>
-            <span className="hf-switcher-text">
+            <span className="rosf-switcher-text">
               <strong>{current.name}</strong>
             </span>
             <ChevronsUpDown
               size={14}
-              className="hf-switcher-chevron"
+              className="rosf-switcher-chevron"
               aria-hidden
             />
           </>
@@ -398,7 +398,7 @@ function WorkspaceSwitcher({
               }
             }}
           >
-            <label className="hf-field">
+            <label className="rosf-field">
               <span>Workspace name</span>
               <input
                 required
@@ -410,11 +410,11 @@ function WorkspaceSwitcher({
               />
             </label>
             {error && (
-              <p role="alert" className="hf-form-error">
+              <p role="alert" className="rosf-form-error">
                 {error}
               </p>
             )}
-            <div className="hf-form-actions">
+            <div className="rosf-form-actions">
               <Button onClick={() => setCreating(false)}>Cancel</Button>
               <Button
                 type="submit"
@@ -439,15 +439,15 @@ function LocalMenu({ collapsed }: { collapsed: boolean }) {
     <DropdownMenu
       label="Preferences"
       side="top"
-      className="hf-user"
-      triggerClassName="hf-user-trigger"
+      className="rosf-user"
+      triggerClassName="rosf-user-trigger"
       trigger={
         <>
-          <span className="hf-avatar" aria-hidden>
+          <span className="rosf-avatar" aria-hidden>
             <Laptop size={14} />
           </span>
           {!collapsed && (
-            <span className="hf-user-text">
+            <span className="rosf-user-text">
               <strong>This computer</strong>
               <small>Local · no sign-in</small>
             </span>
@@ -497,16 +497,16 @@ export function Sidebar({
 }) {
   const shell = useShell();
   return (
-    <div className={cx("hf-sidebar-inner", collapsed && "is-collapsed")}>
-      <div className="hf-brand-row">
-        <Link to="/" className="hf-brand" aria-label="Helix Foundry home">
-          <span className="hf-brand-name">
-            helix<span>foundry</span>
+    <div className={cx("rosf-sidebar-inner", collapsed && "is-collapsed")}>
+      <div className="rosf-brand-row">
+        <Link to="/" className="rosf-brand" aria-label="ROS Foundry home">
+          <span className="rosf-brand-name">
+            ros<span>foundry</span>
           </span>
         </Link>
         <button
           type="button"
-          className="hf-btn hf-btn--ghost hf-btn--sm hf-btn--icon hf-search-button"
+          className="rosf-btn rosf-btn--ghost rosf-btn--sm rosf-btn--icon rosf-search-button"
           aria-label="Search"
           aria-keyshortcuts={ariaShortcut}
           title={`Search (${shortcut})`}
@@ -517,7 +517,7 @@ export function Sidebar({
         {onClose && (
           <button
             type="button"
-            className="hf-btn hf-btn--ghost hf-btn--md hf-btn--icon"
+            className="rosf-btn rosf-btn--ghost rosf-btn--md rosf-btn--icon"
             aria-label="Close navigation"
             title="Close navigation"
             data-autofocus
@@ -529,7 +529,7 @@ export function Sidebar({
         {onToggle && (
           <button
             type="button"
-            className="hf-btn hf-btn--ghost hf-btn--sm hf-btn--icon hf-collapse"
+            className="rosf-btn rosf-btn--ghost rosf-btn--sm rosf-btn--icon rosf-collapse"
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             onClick={onToggle}
@@ -547,16 +547,16 @@ export function Sidebar({
         current={current}
         onSwitch={onSwitch}
       />
-      <nav aria-label="Main navigation" className="hf-nav">
+      <nav aria-label="Main navigation" className="rosf-nav">
         <NavLinks
           items={primaryNav}
           collapsed={collapsed}
           label="Workspace"
           onNavigate={onClose}
         />
-        <div className="hf-nav-spacer" />
+        <div className="rosf-nav-spacer" />
       </nav>
-      <div className="hf-sidebar-foot">
+      <div className="rosf-sidebar-foot">
         <LocalMenu collapsed={collapsed} />
         <SettingsLink />
       </div>

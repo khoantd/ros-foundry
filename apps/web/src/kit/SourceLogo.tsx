@@ -99,7 +99,7 @@ export function SourceLogo({
   const logo = (
     <span
       className={cx(
-        "hf-logo",
+        "rosf-logo",
         key === "mysql" && "is-wordmark",
         !file && "is-generic",
         !showLabel && className,
@@ -117,7 +117,7 @@ export function SourceLogo({
     </span>
   );
   return showLabel ? (
-    <span className={cx("hf-logo-label", className)}>
+    <span className={cx("rosf-logo-label", className)}>
       {logo}
       <span>{label}</span>
     </span>
@@ -141,7 +141,7 @@ export function SourceStack({
     rest = unique.length - shown.length;
   return (
     <span
-      className="hf-logo-stack"
+      className="rosf-logo-stack"
       role="img"
       aria-label={unique.map(connectorLabel).join(", ")}
     >
@@ -149,7 +149,7 @@ export function SourceStack({
         <SourceLogo key={s} source={s} size={size} />
       ))}
       {rest > 0 && (
-        <span className="hf-logo hf-logo-more" style={{ height: size }}>
+        <span className="rosf-logo rosf-logo-more" style={{ height: size }}>
           +{rest}
         </span>
       )}

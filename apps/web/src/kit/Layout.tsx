@@ -21,13 +21,13 @@ export function EmptyState({
   className?: string;
 }) {
   return (
-    <div className={cx("hf-empty", `hf-empty--${size}`, className)}>
-      <div className="hf-empty-icon" aria-hidden>
+    <div className={cx("rosf-empty", `rosf-empty--${size}`, className)}>
+      <div className="rosf-empty-icon" aria-hidden>
         <Icon size={size === "sm" ? 18 : 22} />
       </div>
       <h3>{title}</h3>
       {text && <p>{text}</p>}
-      {action && <div className="hf-empty-action">{action}</div>}
+      {action && <div className="rosf-empty-action">{action}</div>}
     </div>
   );
 }
@@ -60,19 +60,19 @@ export function StatCard({
 }) {
   const body = (
     <>
-      <div className="hf-stat-label">
+      <div className="rosf-stat-label">
         {Icon && <Icon size={15} aria-hidden />}
         <span>{label}</span>
         {status && <StatusDot status={status} />}
-        {to && <ArrowUpRight size={14} className="hf-stat-go" aria-hidden />}
+        {to && <ArrowUpRight size={14} className="rosf-stat-go" aria-hidden />}
       </div>
-      <div className="hf-stat-value hf-num">
-        {loading ? <span className="hf-skeleton hf-stat-skeleton" /> : value}
+      <div className="rosf-stat-value rosf-num">
+        {loading ? <span className="rosf-skeleton rosf-stat-skeleton" /> : value}
       </div>
       {delta && (
         <div
           className={cx(
-            "hf-stat-delta",
+            "rosf-stat-delta",
             delta.good === undefined
               ? "is-flat"
               : delta.good
@@ -84,16 +84,16 @@ export function StatCard({
           {delta.value}
         </div>
       )}
-      {hint && <div className="hf-stat-hint">{hint}</div>}
-      {children && <div className="hf-stat-extra">{children}</div>}
+      {hint && <div className="rosf-stat-hint">{hint}</div>}
+      {children && <div className="rosf-stat-extra">{children}</div>}
     </>
   );
   return to ? (
-    <Link to={to} className={cx("hf-stat", "is-link", className)}>
+    <Link to={to} className={cx("rosf-stat", "is-link", className)}>
       {body}
     </Link>
   ) : (
-    <div className={cx("hf-stat", className)}>{body}</div>
+    <div className={cx("rosf-stat", className)}>{body}</div>
   );
 }
 
@@ -115,16 +115,16 @@ export function Section({
 }) {
   return (
     <section
-      className={cx("hf-section", className)}
+      className={cx("rosf-section", className)}
       aria-labelledby={title && id ? id + "-title" : undefined}
     >
       {(title || actions) && (
-        <div className="hf-section-head">
+        <div className="rosf-section-head">
           <div>
             {title && <h2 id={id ? id + "-title" : undefined}>{title}</h2>}
             {description && <p>{description}</p>}
           </div>
-          {actions && <div className="hf-section-actions">{actions}</div>}
+          {actions && <div className="rosf-section-actions">{actions}</div>}
         </div>
       )}
       {children}
@@ -153,20 +153,20 @@ export function Panel({
   children: ReactNode;
 }) {
   return (
-    <div className={cx("hf-panel", className)} style={style}>
+    <div className={cx("rosf-panel", className)} style={style}>
       {(title || actions) && (
-        <div className="hf-panel-head">
+        <div className="rosf-panel-head">
           <div>
             {title && <h3>{title}</h3>}
             {subtitle && <p>{subtitle}</p>}
           </div>
-          {actions && <div className="hf-panel-actions">{actions}</div>}
+          {actions && <div className="rosf-panel-actions">{actions}</div>}
         </div>
       )}
-      <div className={cx("hf-panel-body", padded && "is-padded")}>
+      <div className={cx("rosf-panel-body", padded && "is-padded")}>
         {children}
       </div>
-      {footer && <div className="hf-panel-foot">{footer}</div>}
+      {footer && <div className="rosf-panel-foot">{footer}</div>}
     </div>
   );
 }
@@ -190,13 +190,13 @@ export function SplitView({
 }) {
   return (
     <div
-      className={cx("hf-split", hasSelection && "has-selection", className)}
-      style={{ "--hf-split-list": listWidth + "px" } as CSSProperties}
+      className={cx("rosf-split", hasSelection && "has-selection", className)}
+      style={{ "--rosf-split-list": listWidth + "px" } as CSSProperties}
     >
-      <aside className="hf-split-list" aria-label={listLabel}>
+      <aside className="rosf-split-list" aria-label={listLabel}>
         {list}
       </aside>
-      <div className="hf-split-detail">{detail}</div>
+      <div className="rosf-split-detail">{detail}</div>
     </div>
   );
 }
@@ -217,15 +217,15 @@ export function KeyValue({
   className?: string;
 }) {
   return (
-    <dl className={cx("hf-kv", `hf-kv--${columns}`, className)}>
+    <dl className={cx("rosf-kv", `rosf-kv--${columns}`, className)}>
       {items.map((item, i) => (
-        <div key={i} className="hf-kv-row">
+        <div key={i} className="rosf-kv-row">
           <dt>{item.label}</dt>
-          <dd className={item.mono ? "hf-mono" : undefined}>
+          <dd className={item.mono ? "rosf-mono" : undefined}>
             {item.value === null ||
             item.value === undefined ||
             item.value === "" ? (
-              <span className="hf-kv-empty">—</span>
+              <span className="rosf-kv-empty">—</span>
             ) : (
               item.value
             )}
@@ -251,14 +251,14 @@ export function Skeleton({
   return (
     <span
       aria-hidden
-      className={cx("hf-skeleton", className)}
+      className={cx("rosf-skeleton", className)}
       style={{ width, height, borderRadius: radius }}
     />
   );
 }
 export function SkeletonText({ lines = 3 }: { lines?: number }) {
   return (
-    <div className="hf-skeleton-text" role="status" aria-label="Loading">
+    <div className="rosf-skeleton-text" role="status" aria-label="Loading">
       {Array.from({ length: lines }, (_, i) => (
         <Skeleton key={i} width={i === lines - 1 ? "60%" : "100%"} />
       ))}

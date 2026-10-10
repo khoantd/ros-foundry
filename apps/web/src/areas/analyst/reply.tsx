@@ -102,7 +102,7 @@ export function Working({
       <span className="an-working-text">{text}</span>
       {since !== undefined && (
         // Hidden from screen readers: a ticking number would be read out every second.
-        <span className="an-working-time hf-num" aria-hidden>
+        <span className="an-working-time rosf-num" aria-hidden>
           {duration(now - since)}
         </span>
       )}
@@ -192,7 +192,7 @@ function CopyButton({ text }: { text: string }) {
       >
         {copied ? "Copied" : "Copy"}
       </Button>
-      <span className="hf-sr-only" aria-live="polite">
+      <span className="rosf-sr-only" aria-live="polite">
         {copied ? "SQL copied" : ""}
       </span>
     </>
@@ -214,7 +214,7 @@ function Details({ run }: { run: Resource }) {
         <ol className="an-events">
           {events.map((e, i) => (
             <li key={i}>
-              <time dateTime={e.at} className="hf-num">
+              <time dateTime={e.at} className="rosf-num">
                 {new Date(e.at).toLocaleTimeString(undefined, {
                   hour: "2-digit",
                   minute: "2-digit",

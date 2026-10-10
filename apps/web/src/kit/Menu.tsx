@@ -61,7 +61,7 @@ export function DropdownMenu({
       const r = trigger.getBoundingClientRect(),
         vw = window.innerWidth,
         vh = window.innerHeight;
-      el.style.setProperty("--hf-menu-trigger-width", `${r.width}px`);
+      el.style.setProperty("--rosf-menu-trigger-width", `${r.width}px`);
       const w = el.offsetWidth,
         h = el.offsetHeight;
       const above = r.top - GAP - h,
@@ -118,7 +118,7 @@ export function DropdownMenu({
     }
   };
   return (
-    <div ref={root} className={cx("hf-menu", className)}>
+    <div ref={root} className={cx("rosf-menu", className)}>
       <button
         ref={button}
         type="button"
@@ -126,7 +126,7 @@ export function DropdownMenu({
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls={open ? id : undefined}
-        className={cx("hf-menu-trigger", triggerClassName)}
+        className={cx("rosf-menu-trigger", triggerClassName)}
         onClick={() => setOpen((v) => !v)}
         onKeyDown={(e) => {
           if (e.key === "ArrowDown" && !open) {
@@ -144,7 +144,7 @@ export function DropdownMenu({
           role="menu"
           popover="manual"
           aria-label={label}
-          className={cx("hf-menu-popover", `is-${align}`, `is-${side}`)}
+          className={cx("rosf-menu-popover", `is-${align}`, `is-${side}`)}
           onKeyDown={onKey}
         >
           <MenuClose.Provider value={() => close()}>
@@ -191,12 +191,12 @@ export function MenuItem({
         <Check
           size={14}
           aria-hidden
-          className={cx("hf-menu-check", !checked && "is-hidden")}
+          className={cx("rosf-menu-check", !checked && "is-hidden")}
         />
       )}
       {Icon && <Icon size={15} aria-hidden />}
-      <span className="hf-menu-label">{children}</span>
-      {hint && <span className="hf-menu-hint">{hint}</span>}
+      <span className="rosf-menu-label">{children}</span>
+      {hint && <span className="rosf-menu-hint">{hint}</span>}
     </>
   );
   const props = {
@@ -204,7 +204,7 @@ export function MenuItem({
     tabIndex: -1,
     "aria-disabled": disabled || undefined,
     "aria-checked": checked,
-    className: cx("hf-menu-item", danger && "is-danger"),
+    className: cx("rosf-menu-item", danger && "is-danger"),
   } as const;
   if (to && !disabled)
     return (
@@ -239,10 +239,10 @@ export function MenuItem({
   );
 }
 export const MenuSeparator = () => (
-  <div role="separator" className="hf-menu-separator" />
+  <div role="separator" className="rosf-menu-separator" />
 );
 export const MenuLabel = ({ children }: { children: ReactNode }) => (
-  <div className="hf-menu-group-label" role="presentation">
+  <div className="rosf-menu-group-label" role="presentation">
     {children}
   </div>
 );
@@ -254,7 +254,7 @@ export const MenuHeader = ({
   title: ReactNode;
   subtitle?: ReactNode;
 }) => (
-  <div className="hf-menu-header" role="presentation">
+  <div className="rosf-menu-header" role="presentation">
     <strong>{title}</strong>
     {subtitle && <small>{subtitle}</small>}
   </div>

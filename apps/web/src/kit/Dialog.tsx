@@ -53,27 +53,27 @@ export function Dialog({
       ref={ref}
       aria-label={title}
       className={cx(
-        "hf-dialog",
-        `hf-dialog--${size}`,
-        `hf-dialog--${variant}`,
+        "rosf-dialog",
+        `rosf-dialog--${size}`,
+        `rosf-dialog--${variant}`,
         className,
       )}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="hf-dialog-card">
+      <div className="rosf-dialog-card">
         {hideTitle ? (
-          <h2 className="hf-sr-only">{title}</h2>
+          <h2 className="rosf-sr-only">{title}</h2>
         ) : (
-          <div className="hf-dialog-head">
+          <div className="rosf-dialog-head">
             <div>
               <h2>{title}</h2>
               {description && <p>{description}</p>}
             </div>
             <button
               type="button"
-              className="hf-btn hf-btn--ghost hf-btn--md hf-btn--icon"
+              className="rosf-btn rosf-btn--ghost rosf-btn--md rosf-btn--icon"
               aria-label="Close"
               onClick={onClose}
             >
@@ -81,8 +81,8 @@ export function Dialog({
             </button>
           </div>
         )}
-        <div className="hf-dialog-body">{children}</div>
-        {footer && <div className="hf-dialog-foot">{footer}</div>}
+        <div className="rosf-dialog-body">{children}</div>
+        {footer && <div className="rosf-dialog-foot">{footer}</div>}
       </div>
     </dialog>
   );
@@ -139,7 +139,7 @@ export function ConfirmDialog({
     >
       {children}
       {requireText && (
-        <label className="hf-field">
+        <label className="rosf-field">
           <span>
             Type <strong>{requireText}</strong> to confirm
           </span>

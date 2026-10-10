@@ -53,7 +53,7 @@ describe("workspace UI kit", () => {
     expect(html).toContain('aria-rowcount="10001"');
     expect(html).toContain("1,000.5");
     expect(html).toContain("{&quot;tag&quot;:&quot;x&quot;}");
-    expect(html).toContain('class="hf-null"');
+    expect(html).toContain('class="rosf-null"');
   });
   it("maps types, statuses and connectors", () => {
     expect(columnKind("TIMESTAMP WITH TIME ZONE")).toBe("timestamp");
@@ -95,10 +95,9 @@ describe("workspace UI kit", () => {
     expect(activeSection("/data/datasets/x")).toBe("data");
     expect(activeSection("/records/abc")).toBe("ontology");
     expect(activeSection("/runs/1")).toBe("analyst");
-    // Removed sections: SQL, Pipelines, Activity and Dashboards have no
-    // sidebar entry.
+    expect(activeSection("/pipelines")).toBe("pipelines");
+    // Removed sections: SQL, Activity and Dashboards have no sidebar entry.
     expect(activeSection("/explore")).toBeUndefined();
-    expect(activeSection("/pipelines")).toBeUndefined();
     expect(activeSection("/activity")).toBeUndefined();
     expect(activeSection("/dashboards")).toBeUndefined();
     expect(childActive("/data", { to: "/data", label: "", end: true })).toBe(

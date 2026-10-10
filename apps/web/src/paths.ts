@@ -3,6 +3,7 @@
 import { dataPaths } from "./areas/data/paths";
 import { ontologyPaths } from "./areas/ontology/paths";
 import { analystPaths } from "./areas/analyst/paths";
+import { pipelinePaths } from "./areas/pipelines/paths";
 import { workspacePaths } from "./areas/workspace/paths";
 
 export const paths = {
@@ -11,5 +12,6 @@ export const paths = {
   ...dataPaths,
   ...ontologyPaths,
   ...analystPaths,
+  ...pipelinePaths,
   ...workspacePaths,
 };

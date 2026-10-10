@@ -80,7 +80,7 @@ export default function Assistant({
             disabled={!ready}
           >
             {pending ? (
-              <LoaderCircle size={17} className="hf-spin" aria-hidden />
+              <LoaderCircle size={17} className="rosf-spin" aria-hidden />
             ) : (
               <ArrowUp size={17} aria-hidden />
             )}

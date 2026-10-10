@@ -16,12 +16,17 @@ export const PipelineNodeSchema = z.object({
     "deduplicate",
     "join",
     "aggregate",
+    "limit",
     "sql",
   ]),
   inputs: z.array(z.string()),
   sql: z.string().optional(),
   datasetId: z.string().optional(),
   config: z.record(z.string(), z.unknown()).default({}),
+  /** Canvas coordinates for the visual DAG editor (ignored by compilePipeline). */
+  position: z
+    .object({ x: z.number().finite(), y: z.number().finite() })
+    .optional(),
 });
 export const PipelineSchema = z.object({
   name: z.string().min(1),

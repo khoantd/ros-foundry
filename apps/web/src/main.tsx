@@ -50,16 +50,18 @@ function area<M>(load: () => Promise<M>, name: keyof M) {
 const data = () => import("./areas/data"),
   ontology = () => import("./areas/ontology"),
   analyst = () => import("./areas/analyst"),
+  pipelines = () => import("./areas/pipelines"),
   workspace = () => import("./areas/workspace");
 const Onboarding = lazy(() => import("./onboarding"));
 const HomePage = area(workspace, "HomePage"),
   SettingsPage = area(workspace, "WorkspaceSettingsPage"),
   ProposalsPage = area(workspace, "ProposalsPage");
-// Data, Ontology and Analyst own their whole URL prefix: each area's *Routes
-// component holds its nested route table.
+// Data, Ontology, Pipelines and Analyst own their whole URL prefix: each
+// area's *Routes component holds its nested route table.
 const DataRoutes = area(data, "DataRoutes");
 const OntologyRoutes = area(ontology, "OntologyRoutes"),
   ObjectView = area(ontology, "ObjectView");
+const PipelinesRoutes = area(pipelines, "PipelinesRoutes");
 const AnalystRoutes = area(analyst, "AnalystRoutes"),
   AnalystPanel = area(analyst, "AnalystPanel");
 
@@ -79,7 +81,7 @@ function WorkspaceRoutes() {
       <Route path="/data/*" element={<DataRoutes />} />
       <Route path="/sources" element={<Redirect to="/data" />} />
       <Route path="/explore" element={<Redirect to="/data" />} />
-      <Route path="/pipelines/*" element={<Redirect to="/data" />} />
+      <Route path="/pipelines/*" element={<PipelinesRoutes />} />
       <Route path="/ontology/*" element={<OntologyRoutes />} />
       <Route path="/records" element={<Redirect to="/ontology/explore" />} />
       <Route path="/records/:logicalId" element={<ObjectView />} />
@@ -97,15 +99,15 @@ function WorkspaceRoutes() {
 }
 function RouteFallback() {
   return (
-    <div className="hf-page hf-page--default" aria-busy="true">
+    <div className="rosf-page rosf-page--default" aria-busy="true">
       <SkeletonText lines={5} />
     </div>
   );
 }
 function GateError({ retry }: { retry: () => void }) {
   return (
-    <div className="hf-app hf-center">
-      <div role="alert" className="hf-gate-error">
+    <div className="rosf-app rosf-center">
+      <div role="alert" className="rosf-gate-error">
         <p>Couldn’t check workspace setup.</p>
         <Button onClick={retry}>Retry</Button>
       </div>
@@ -136,7 +138,7 @@ function SetupGate({
   return failed ? (
     <GateError retry={() => window.location.reload()} />
   ) : (
-    <div className="hf-app hf-center">
+    <div className="rosf-app rosf-center">
       <Loading />
     </div>
   );
@@ -182,9 +184,9 @@ function App() {
   if (me.isPending) return <Loading />;
   if (!me.data || !selected)
     return (
-      <div className="hf-app hf-center">
-        <div role="alert" className="hf-gate-error">
-          <p>Couldn’t reach Helix Foundry. Check that the API is running.</p>
+      <div className="rosf-app rosf-center">
+        <div role="alert" className="rosf-gate-error">
+          <p>Couldn’t reach ROS Foundry. Check that the API is running.</p>
           <Button onClick={() => me.refetch()}>Retry</Button>
         </div>
       </div>
@@ -192,7 +194,7 @@ function App() {
   const gated = !inSetup && !ungated.test(location.pathname);
   if (gated && onboarding.isPending)
     return (
-      <div className="hf-app hf-center">
+      <div className="rosf-app rosf-center">
         <Loading />
       </div>
     );
@@ -239,7 +241,7 @@ function App() {
     );
   return (
     <WorkspaceContext.Provider value={context}>
-      <div className="hf-app">
+      <div className="rosf-app">
         <LiveActivityProvider workspaceId={selected.id}>
           <Shell
             workspaces={me.data.workspaces}
@@ -249,7 +251,7 @@ function App() {
           >
             <RouteErrorBoundary resetKey={location.pathname}>
               <Suspense fallback={<RouteFallback />}>
-                <div key={selected.id} className="hf-route">
+                <div key={selected.id} className="rosf-route">
                   <WorkspaceRoutes />
                 </div>
               </Suspense>
@@ -279,7 +281,7 @@ function App() {
           {toast && (
             <div
               role={toast.error ? "alert" : "status"}
-              className={"hf-toast" + (toast.error ? " is-error" : "")}
+              className={"rosf-toast" + (toast.error ? " is-error" : "")}
             >
               <span>{toast.text}</span>
               <button aria-label="Dismiss" onClick={() => setToast(null)}>

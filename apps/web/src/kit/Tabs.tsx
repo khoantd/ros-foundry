@@ -83,7 +83,7 @@ export function Tabs({
     refs.current[next.id]?.focus();
   };
   return (
-    <div role="tablist" aria-label={label} className={cx("hf-tabs", className)}>
+    <div role="tablist" aria-label={label} className={cx("rosf-tabs", className)}>
       {items.map((t) => {
         const selected = t.id === current;
         return (
@@ -99,14 +99,14 @@ export function Tabs({
             aria-controls={panelId(idPrefix, t.id)}
             tabIndex={selected ? 0 : -1}
             disabled={t.disabled}
-            className={cx("hf-tab", selected && "is-active")}
+            className={cx("rosf-tab", selected && "is-active")}
             onClick={() => select(t.id)}
             onKeyDown={(e) => move(e, t.id)}
           >
             {t.icon && <t.icon size={15} aria-hidden />}
             <span>{t.label}</span>
             {t.count !== undefined && (
-              <span className="hf-tab-count">{formatNumber(t.count)}</span>
+              <span className="rosf-tab-count">{formatNumber(t.count)}</span>
             )}
           </button>
         );
@@ -137,7 +137,7 @@ export function TabPanel({
       id={panelId(idPrefix, id)}
       aria-labelledby={tabId(idPrefix, id)}
       tabIndex={0}
-      className={cx("hf-tab-panel", className)}
+      className={cx("rosf-tab-panel", className)}
     >
       {children}
     </div>

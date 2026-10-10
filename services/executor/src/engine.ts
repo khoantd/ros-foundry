@@ -7,12 +7,16 @@ export const quote = (v: string) => '"' + v.replaceAll('"', '""') + '"';
 const lit = (v: string) => "'" + v.replaceAll("'", "''") + "'";
 const safePart = (s: string) => /^[a-zA-Z0-9_-]{1,100}$/.test(s);
 export type Execution = {
-  mode: "ingest" | "query" | "export";
+  mode: "ingest" | "query" | "export" | "patch";
   scope: string;
   version?: string;
   file?: string;
   format?: string;
   schema?: { name: string; type: string }[];
+  /** Parquet version to load before applying CDC row deltas (patch mode). */
+  baseVersion?: string;
+  /** Primary-key column names used to match deletes/upserts (patch mode). */
+  keys?: string[];
   inputs?: {
     table: string;
     version: string;
@@ -68,6 +72,50 @@ export async function execute(
         );
       } else
         await c.run(`CREATE TABLE result AS SELECT * FROM ${fn}(${lit(file)})`);
+    } else if (job.mode === "patch") {
+      if (!job.baseVersion || !safePart(job.baseVersion))
+        throw new Error("Invalid base version");
+      if (!job.keys?.length) throw new Error("Primary key required for patch");
+      if (!job.file || !/^[-\w]+\.jsonl$/.test(job.file))
+        throw new Error("Invalid delta file");
+      const base = resolve(
+        root,
+        "datasets",
+        job.scope,
+        job.baseVersion + ".parquet",
+      );
+      const delta = resolve(root, "incoming", job.scope, job.file);
+      await c.run(
+        `CREATE TABLE result AS SELECT * FROM read_parquet(${lit(base)})`,
+      );
+      const deltaInfo = await stat(delta);
+      if (deltaInfo.size > 0) {
+        await c.run(
+          `CREATE TABLE delta AS SELECT * FROM read_json_auto(${lit(delta)}, format='newline_delimited')`,
+        );
+        const cols = (
+          await c.runAndReadAll("DESCRIBE delta")
+        ).getRowObjectsJson();
+        const names = new Set(cols.map((col) => String(col.column_name)));
+        if (!names.has("_patch") || !job.keys.every((k) => names.has(k)))
+          throw new Error("Delta file missing patch columns");
+        const match = job.keys
+          .map((k) => `${quote("result")}.${quote(k)} IS NOT DISTINCT FROM ${quote("delta")}.${quote(k)}`)
+          .join(" AND ");
+        await c.run(
+          `DELETE FROM result WHERE EXISTS (SELECT 1 FROM delta WHERE delta._patch IN ('delete','upsert') AND ${match})`,
+        );
+        const insertCols = (
+          await c.runAndReadAll("DESCRIBE result")
+        ).getRowObjectsJson().map((col) => String(col.column_name));
+        for (const k of job.keys)
+          if (!insertCols.includes(k))
+            throw new Error("Base snapshot missing primary key column");
+        const selectList = insertCols.map((col) => quote(col)).join(", ");
+        await c.run(
+          `INSERT INTO result SELECT ${selectList} FROM delta WHERE delta._patch = 'upsert'`,
+        );
+      }
     } else {
       for (const input of job.inputs || []) {
         if (!safePart(input.table) || !safePart(input.version))
@@ -127,7 +175,7 @@ export async function execute(
       const path = out.replace(/\.parquet$/, ".csv");
       throw new Error("Use dataset Parquet export or paginated CSV export");
     }
-    if (job.mode === "ingest" || job.persist)
+    if (job.mode === "ingest" || job.mode === "patch" || job.persist)
       await c.run(`COPY result TO ${lit(out)} (FORMAT PARQUET)`);
     const rows = Number(
       (

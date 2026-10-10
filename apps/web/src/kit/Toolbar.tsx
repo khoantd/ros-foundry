@@ -14,12 +14,12 @@ export function Toolbar({
   sticky?: boolean;
 }) {
   return (
-    <div className={cx("hf-toolbar", sticky && "is-sticky", className)}>
+    <div className={cx("rosf-toolbar", sticky && "is-sticky", className)}>
       {children}
     </div>
   );
 }
-export const ToolbarSpacer = () => <span className="hf-toolbar-spacer" />;
+export const ToolbarSpacer = () => <span className="rosf-toolbar-spacer" />;
 
 export function SearchInput({
   value,
@@ -39,7 +39,7 @@ export function SearchInput({
   "value" | "onChange" | "className"
 >) {
   return (
-    <div className={cx("hf-search", className)}>
+    <div className={cx("rosf-search", className)}>
       <Search size={15} aria-hidden />
       <input
         type="search"
@@ -77,7 +77,7 @@ export function FilterSelect({
   className?: string;
 }) {
   return (
-    <label className={cx("hf-filter-select", className)}>
+    <label className={cx("rosf-filter-select", className)}>
       <span>{label}</span>
       <select value={value} onChange={(e) => onChange(e.target.value)}>
         {options.map((o) => (
@@ -103,7 +103,7 @@ export function Segmented({
   options: { value: string; label: ReactNode; count?: number }[];
 }) {
   return (
-    <div className="hf-segmented" role="radiogroup" aria-label={label}>
+    <div className="rosf-segmented" role="radiogroup" aria-label={label}>
       {options.map((o) => (
         <button
           key={o.value}
@@ -143,7 +143,7 @@ export function FilterBar({
   className?: string;
 }) {
   return (
-    <Toolbar className={cx("hf-filterbar", className)}>
+    <Toolbar className={cx("rosf-filterbar", className)}>
       {search && (
         <SearchInput
           value={search.value}
@@ -155,7 +155,7 @@ export function FilterBar({
       {children}
       <ToolbarSpacer />
       {count !== undefined && (
-        <span className="hf-filterbar-count">{count}</span>
+        <span className="rosf-filterbar-count">{count}</span>
       )}
       {actions}
     </Toolbar>

@@ -8,6 +8,7 @@ import { pipeline } from "node:stream/promises";
 import { CronExpressionParser } from "cron-parser";
 import {
   SourceSchema,
+  SourceSyncUpdateSchema,
   DemoSchema,
   datasetTable,
 } from "../../../../packages/shared/src/index.js";
@@ -21,7 +22,7 @@ import {
   queryDatasets,
   seedDemo,
 } from "../datasets.js";
-import { sourceSyncDefaults } from "../source-sync.js";
+import { scheduleFields, sourceSyncDefaults } from "../source-sync.js";
 import { testedConnection } from "../onboarding.js";
 import { resolveHostedConfig } from "../hosting.js";
 import type { RequestSchemas, RouteDeps } from "./deps.js";
@@ -30,6 +31,7 @@ export const dataSchemas: RequestSchemas = {
   "POST /api/v1/workspaces/:w/demo": DemoSchema,
   "POST /api/v1/workspaces/:w/sources": SourceSchema,
   "POST /api/v1/workspaces/:w/sources/test": SourceSchema,
+  "PATCH /api/v1/workspaces/:w/sources/:id": SourceSyncUpdateSchema,
   "POST /api/v1/workspaces/:w/ingest": z.object({
     name: z.string(),
     rows: z.array(z.record(z.string(), z.unknown())).min(1).max(10000),
@@ -197,6 +199,30 @@ export function registerDataRoutes(
       b.kind,
       (await resolveHostedConfig(store, a.scope, b.kind, b.config)).config,
     );
+  });
+  app.patch("/api/v1/workspaces/:w/sources/:id", async (req: any) => {
+    const a = await access(req, "editor"),
+      b = SourceSyncUpdateSchema.parse(req.body ?? {});
+    if (b.schedule) {
+      try {
+        CronExpressionParser.parse(b.schedule, { tz: "UTC" });
+      } catch {
+        assert(false, "Invalid UTC cron schedule", 400);
+      }
+    }
+    return transaction(store, a.scope, async (tx) => {
+      const source = await tx.get(req.params.id);
+      assert(source?.kind === "source", "Source unavailable", 404);
+      const timing =
+        b.schedule !== undefined ? scheduleFields(source, b.schedule) : {};
+      return scrub(
+        tx.update(source, {
+          ...source.data,
+          ...timing,
+          ...(b.paused !== undefined ? { paused: b.paused } : {}),
+        }),
+      );
+    });
   });
   app.post("/api/v1/workspaces/:w/sources/:id/sync", async (req: any) => {
     const a = await access(req, "editor"),

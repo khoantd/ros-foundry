@@ -1,7 +1,7 @@
 <h1 align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg">
-    <img src="docs/assets/logo-light.svg" alt="Helix Foundry" width="320">
+    <img src="docs/assets/logo-light.svg" alt="ROS Foundry" width="320">
   </picture>
 </h1>
 
@@ -9,10 +9,10 @@
   <strong>Your company's data, connected into one ontology, on your own computer.</strong>
 </p>
 
-Helix Foundry is a local-first data workspace built on [HelixDB](https://docs.helix-db.com) and [DuckDB](https://duckdb.org). Connect the tools your company already runs on, such as your database, Stripe, WorkOS, PostHog, files and APIs, and it suggests one connected ontology across them that you can explore and ask questions of. There are no accounts and nothing to host: it runs on your computer, and AI runs locally by default.
+ROS Foundry is a local-first data workspace built on [HelixDB](https://docs.helix-db.com) and [DuckDB](https://duckdb.org). Connect the tools your company already runs on, such as your database, Stripe, WorkOS, PostHog, files and APIs, and it suggests one connected ontology across them that you can explore and ask questions of. There are no accounts and nothing to host: it runs on your computer, and AI runs locally by default.
 
 <p align="center">
-  <img src="docs/assets/hero.png" width="720" alt="The Helix Foundry Explorer showing accounts, users, invoices, subscriptions, campaigns, SSO connections and support tickets as one connected graph">
+  <img src="docs/assets/hero.png" width="720" alt="The ROS Foundry Explorer showing accounts, users, invoices, subscriptions, campaigns, SSO connections and support tickets as one connected graph">
 </p>
 
 ## Get started with your coding agent
@@ -22,11 +22,10 @@ You need [Docker](https://docs.docker.com/get-started/get-docker/) installed and
 Paste this prompt into Claude Code, Codex, Cursor or any coding agent that can run terminal commands:
 
 ```text
-Set up Helix Foundry on this computer.
+Set up ROS Foundry on this computer.
 
-Clone https://github.com/helixdb/helix-foundry.git (or use the copy I already
-have), cd into it, then read AGENTS.md and follow it to install, start and
-verify the app. Ask me before doing anything that deletes data or stops
+Use this repository (or clone your ROS Foundry remote), cd into it, then read
+AGENTS.md and follow it to install, start and verify the app. Ask me before doing anything that deletes data or stops
 something that is already running. When it is ready, give me the URL and
 tell me what to do next.
 ```
@@ -53,8 +52,7 @@ You enter Claude or OpenAI keys and database credentials yourself, in the browse
 You need Docker with Compose v2 (see [requirements](#requirements)).
 
 ```sh
-git clone https://github.com/helixdb/helix-foundry.git
-cd helix-foundry
+# from this repository root
 ./scripts/setup.sh --compose
 ```
 
@@ -64,7 +62,7 @@ It is ready when the health check answers:
 
 ```sh
 curl -fsS http://localhost:3001/api/health
-# {"ok":true,"service":"helix-foundry"}
+# {"ok":true,"service":"ros-foundry"}
 ```
 
 Then open **http://localhost:3001**. The model keeps downloading in the background, and you can start setup before it finishes.
@@ -98,7 +96,7 @@ This relies on Docker Desktop, which provides `host.docker.internal`. With anoth
 - **Memory:** local AI was developed and benchmarked on a 16 GB machine. Give Docker enough memory for the model, or choose Claude or OpenAI during setup.
 - **Node.js 24 and pnpm 10.7**, only for [local development](#local-development).
 
-Helix Foundry is developed and validated on macOS with Apple Silicon, and CI runs on Linux. Windows is untested, and the scripts need bash.
+ROS Foundry is developed and validated on macOS with Apple Silicon, and CI runs on Linux. Windows is untested, and the scripts need bash.
 
 ## What you get
 
@@ -128,7 +126,7 @@ The stack starts again with Docker unless you stopped it.
 **Upgrade.** Back up first, then pull and rebuild:
 
 ```sh
-./scripts/backup.sh ~/helix-foundry-backups/$(date +%Y%m%d-%H%M%S)
+./scripts/backup.sh ~/ros-foundry-backups/$(date +%Y%m%d-%H%M%S)
 git pull
 docker compose --profile local up -d --build
 ```
@@ -144,8 +142,8 @@ Use Node.js 24 and pnpm 10.7. Run HelixDB in Docker and the app natively:
 ```sh
 pnpm install
 ./scripts/setup.sh
-docker run -d --name helix-foundry-dev -p 127.0.0.1:6996:8080 \
-  -e HELIX_DATA_DIR=/var/lib/helix -v helix-foundry-dev:/var/lib/helix \
+docker run -d --name ros-foundry-dev -p 127.0.0.1:6996:8080 \
+  -e HELIX_DATA_DIR=/var/lib/helix -v ros-foundry-dev:/var/lib/helix \
   ghcr.io/helixdb/helixdb:v0.0.6@sha256:94b29942658ebdca0a91bf15edffe921a46da3e26e1223ea333ccce58c6212dd
 pnpm dev
 ```
@@ -154,7 +152,7 @@ Open **http://localhost:5173**. `pnpm dev` runs the API on 3001, the executor on
 
 ## Security model
 
-Helix Foundry is built for one person on their own computer. There are no accounts and no sign-in, so anyone who can reach the app controls every workspace.
+ROS Foundry is built for one person on their own computer. There are no accounts and no sign-in, so anyone who can reach the app controls every workspace.
 
 - The app is published on `127.0.0.1` only. Never expose it with a reverse proxy, tunnel or port forward, and never publish the internal HelixDB, executor or Ollama ports.
 - The API rejects requests whose `Host` is not this computer, and browser changes from any other origin, with `403`.
@@ -176,4 +174,4 @@ Helix Foundry is built for one person on their own computer. There are no accoun
 
 ## License
 
-Helix Foundry is released under the [MIT License](LICENSE).
+ROS Foundry is released under the [MIT License](LICENSE).

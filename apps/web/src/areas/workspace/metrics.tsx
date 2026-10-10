@@ -355,7 +355,7 @@ function TrendChart({ m, points }: { m: HomeMetric; points: Point[] }) {
           <span>{pointLabel(a.label, m.grain, true)}</span>
         </div>
       )}
-      <span className="hf-sr-only" aria-live="polite">
+      <span className="rosf-sr-only" aria-live="polite">
         {focused && a
           ? `${pointLabel(a.label, m.grain, true)}: ${formatMetric(a.value, m.format, true)}`
           : ""}
@@ -407,7 +407,7 @@ function BreakdownChart({ m, points }: { m: HomeMetric; points: Point[] }) {
                   style={{ width: `${pct}%`, minWidth: pct > 0 ? 2 : 0 }}
                 />
               </span>
-              <span className="wk-bar-value hf-num">
+              <span className="wk-bar-value rosf-num">
                 {formatMetric(p.value, m.format)}
               </span>
               {/* Above the row, from its start: it always fits the card and
@@ -422,7 +422,7 @@ function BreakdownChart({ m, points }: { m: HomeMetric; points: Point[] }) {
           );
         })}
       </div>
-      <span className="hf-sr-only" aria-live="polite">
+      <span className="rosf-sr-only" aria-live="polite">
         {focused && a
           ? `${a.label}: ${formatMetric(a.value, m.format, true)}`
           : ""}
@@ -471,7 +471,7 @@ function KpiTile({ m }: { m: HomeMetric }) {
         hint={
           <>
             {hint}
-            {m.why && <span className="hf-sr-only">. {m.why}</span>}
+            {m.why && <span className="rosf-sr-only">. {m.why}</span>}
           </>
         }
       />

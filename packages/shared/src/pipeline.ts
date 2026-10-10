@@ -75,6 +75,24 @@ export function compilePipeline(nodes: PipelineNode[]) {
           sql = `SELECT ${[...group.map(q), ...metrics].join(", ")} FROM ${source}${group.length ? " GROUP BY " + columns(group) : ""}`;
           break;
         }
+        case "limit": {
+          const lim =
+            c.limit == null
+              ? null
+              : z.number().int().nonnegative().parse(c.limit);
+          const off =
+            c.offset == null
+              ? null
+              : z.number().int().nonnegative().parse(c.offset);
+          if (lim == null && off == null) {
+            throw new Error("Set a LIMIT or OFFSET on " + id);
+          }
+          sql =
+            `SELECT * FROM ${source}` +
+            (lim != null ? ` LIMIT ${lim}` : "") +
+            (off != null ? ` OFFSET ${off}` : "");
+          break;
+        }
         case "sql":
           sql = z.string().min(1).parse(n.sql);
           break;

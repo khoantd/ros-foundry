@@ -7,7 +7,7 @@ backup_dir="$(cd "$backup_dir" && pwd)"
 chmod 700 "$backup_dir"
 docker compose stop app worker executor helix
 trap 'docker compose start helix executor app worker' EXIT
-project_name="${COMPOSE_PROJECT_NAME:-helix-foundry}"
+project_name="${COMPOSE_PROJECT_NAME:-ros-foundry}"
 for volume in helix-data foundry-data; do
   docker run --rm -v "${project_name}_$volume:/data:ro" -v "$backup_dir:/backup" alpine:3.22 tar czf "/backup/$volume.tgz" -C /data .
 done

@@ -36,6 +36,7 @@ Each area owns its section below; add new routes to your own section.
 | POST `/upload`                      | Multipart file; CSV, JSON, JSONL, Parquet; maximum 256 MB               |
 | POST `/sources/test`                | `{ name, kind, config }`; discovery and key information                 |
 | POST `/sources`                     | `{ name, kind, config, schedule? }`; encrypted source definition        |
+| PATCH `/sources/:id`                | `{ schedule?, paused? }`; UTC cron (or null for automatic) and pause    |
 | POST `/sources/:id/sync`            | `{}`; durable job                                                       |
 | POST `/datasets/:id/preview`        | `{ offset?, limit? }`; rows and profile                                 |
 | GET `/datasets/:id/export`          | Download active Parquet snapshot                                        |
@@ -83,7 +84,7 @@ Each area owns its section below; add new routes to your own section.
 
 MySQL config: `{ host, port:3306, database, user, password, table, tls, ca? }`. PostgreSQL accepts `{ connectionString, schema?, table, tls?, ca? }` or the existing individual connection fields. URL credentials are encrypted with the rest of the connector configuration. URL mode defaults to verified TLS; an explicit `sslmode=disable` or `tls:false` disables it. Supported URL options are `sslmode`, `ssl`, and `application_name`; local certificate file paths are rejected. REST config: `{ url, itemsPath?, token?, header?, pagination:'none'|'next'|'cursor'|'offset', nextPath?, cursorParam?, offsetParam?, limitParam?, pageSize? }`. S3 config: `{ bucket, key, prefix?, region?, endpoint?, accessKeyId?, secretAccessKey? }`.
 
-PostgreSQL/MySQL import jobs attempt native CDC automatically. `source.data.sync` exposes the mode, status, reason, last captured event, and change/applied counters (`SourceSyncState` in the shared package and SDK). Working CDC ignores `schedule`; the optional UTC schedule is only the snapshot fallback, defaulting to five minutes. REST/S3 use snapshot refreshes because these connectors do not expose database logs. Uploaded files and ingestion requests remain explicit inputs. See `OPERATIONS.md` for privileges and materialization limits.
+PostgreSQL/MySQL import jobs attempt native CDC automatically. `source.data.sync` exposes the mode, status, reason, last captured event, and change/applied counters (`SourceSyncState` in the shared package and SDK). Working CDC journals row deltas and applies them by primary key when safe; otherwise it falls back to a full snapshot. Working CDC ignores `schedule`; the optional UTC schedule is only the snapshot fallback, defaulting to five minutes. REST/S3 use snapshot refreshes because these connectors do not expose database logs. Uploaded files and ingestion requests remain explicit inputs. See `OPERATIONS.md` for privileges and materialization limits.
 
 Omitting `intent` retains the API's `build` default. `auto` persists a bounded answer/build routing stage and accounts for it in existing budgets. Context IDs are resolved server-side within the caller's workspace; secrets and inactive generations are not accepted. Read-only tokens may ask questions, but a request routed to build stops before generation. `resources/object` supports `type`, `search`, and exact `field`/`value` filters on effective workspace values. Dashboard routes use `/dashboards/:encodedName`; record routes use `/records/:logicalId`.
 
@@ -94,12 +95,12 @@ A proposal contains `bundle`, `validation`, `hash`, and `status`. The validation
 Build and package both workspace libraries with `pnpm build:sdk`, `pnpm -C packages/shared pack`, and `pnpm -C packages/sdk pack`. Install the resulting tarballs in your client project:
 
 ```ts
-import { FoundryClient } from "@helix-foundry/sdk";
+import { FoundryClient } from "@ros-foundry/sdk";
 
 const foundry = new FoundryClient({
   baseUrl: "http://localhost:3001",
-  workspaceId: process.env.FOUNDRY_WORKSPACE!,
-  token: process.env.FOUNDRY_TOKEN!,
+  workspaceId: process.env.ROS_FOUNDRY_WORKSPACE!,
+  token: process.env.ROS_FOUNDRY_TOKEN!,
 });
 
 const dataset = await foundry.ingest("Orders", [

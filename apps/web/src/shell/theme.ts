@@ -16,7 +16,7 @@ export function readTheme(): ThemePreference {
   const v = readStorage(KEY, "light");
   return v === "dark" || v === "system" ? v : "light";
 }
-// data-theme on <html> picks the --hf-* token set; without it the OS decides.
+// data-theme on <html> picks the --rosf-* token set; without it the OS decides.
 export function applyTheme(pref: ThemePreference) {
   const root = document.documentElement;
   if (pref === "system") delete root.dataset.theme;
@@ -24,10 +24,10 @@ export function applyTheme(pref: ThemePreference) {
   syncThemeColor();
 }
 // The browser chrome colour follows the shell's theme while the shell is
-// mounted (html.hf-root); onboarding and sign-in stay light.
+// mounted (html.rosf-root); onboarding and sign-in stay light.
 export function syncThemeColor() {
   const root = document.documentElement,
-    pref = root.classList.contains("hf-root") ? readTheme() : "light";
+    pref = root.classList.contains("rosf-root") ? readTheme() : "light";
   document
     .querySelectorAll<HTMLMetaElement>('meta[name="theme-color"]')
     .forEach((meta) => {

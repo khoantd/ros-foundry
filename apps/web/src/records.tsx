@@ -263,7 +263,7 @@ export default function RecordsPage() {
             }
             actions={
               <details className="rx-columns">
-                <summary className="hf-btn hf-btn--secondary hf-btn--sm">
+                <summary className="rosf-btn rosf-btn--secondary rosf-btn--sm">
                   <Columns3 size={14} aria-hidden /> Columns
                 </summary>
                 <div className="rx-columns-menu">

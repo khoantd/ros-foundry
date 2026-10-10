@@ -12,6 +12,11 @@ import type { Resource } from "../../../packages/shared/src/index.js";
 import { now, transaction, type Store } from "./store.js";
 import { postgresPoolConfig } from "./postgres-config.js";
 import { unseal } from "./security.js";
+import {
+  appendJournalOps,
+  keyFields,
+  type CdcOp,
+} from "./cdc-journal.js";
 
 const FALLBACK = "*/5 * * * *";
 // Hourly keeps full SaaS API snapshots well within their rate limits.
@@ -60,6 +65,7 @@ export function sourceSyncDefaults(kind: string, schedule?: string | null) {
 }
 
 export function scheduledRefresh(source: Resource) {
+  if (source.data.paused) return false;
   if (source.data.sync?.mode === "cdc" || source.data.sync?.mode === "auto")
     return false;
   return (
@@ -69,6 +75,23 @@ export function scheduledRefresh(source: Resource) {
 }
 export function nextRefresh(source: Resource) {
   return nextRun(source.data.schedule || fallback(source.data.kind));
+}
+
+/** Recompute nextRun after a schedule change. CDC/auto keep null until fallback. */
+export function scheduleFields(
+  source: Resource,
+  schedule: string | null | undefined,
+) {
+  const next =
+    schedule === undefined ? source.data.schedule : schedule;
+  const live =
+    source.data.sync?.mode === "cdc" || source.data.sync?.mode === "auto";
+  return {
+    schedule: next ?? null,
+    nextRun: live
+      ? null
+      : nextRun(next || fallback(source.data.kind)),
+  };
 }
 
 export async function prepareSourceSync(
@@ -106,10 +129,11 @@ export async function prepareSourceSync(
       if (capability?.wal !== "logical") throw new Error("logical");
       if (!capability.replication) throw new Error("replication");
       const keys = await client.query(
-        "SELECT a.attname FROM pg_index i JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey) JOIN pg_class t ON t.oid=i.indrelid WHERE i.indrelid = $1::regclass AND i.indisprimary AND t.relreplident <> 'n'",
+        "SELECT a.attname FROM pg_index i JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey) JOIN pg_class t ON t.oid=i.indrelid WHERE i.indrelid = $1::regclass AND i.indisprimary AND t.relreplident <> 'n' ORDER BY array_position(i.indkey, a.attnum)",
         [quote(c.schema || "public") + "." + quote(c.table)],
       );
       if (!keys.rowCount) throw new Error("primary key");
+      const keyNames = keys.rows.map((r: { attname: string }) => r.attname);
       const existingPub = (
         await client.query("SELECT 1 FROM pg_publication WHERE pubname=$1", [
           name,
@@ -159,6 +183,7 @@ export async function prepareSourceSync(
         slot: name,
         publication: name,
         cursor: slot.lsn,
+        keys: keyNames,
         changes: 0,
         applied: 0,
         reason: null,
@@ -202,11 +227,17 @@ export async function prepareSourceSync(
         [status] = await client.query("SHOW MASTER STATUS");
       }
       if (!status[0]?.File) throw new Error("log unavailable");
+      const [keyRows]: any = await client.query(
+        "SELECT COLUMN_NAME name FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA=? AND TABLE_NAME=? AND CONSTRAINT_NAME='PRIMARY' ORDER BY ORDINAL_POSITION",
+        [c.database, c.table],
+      );
+      const keyNames = (keyRows as { name: string }[]).map((r) => r.name);
       sync = {
         mode: "cdc",
         status: "starting",
         server: variables[0].server,
         cursor: { file: status[0].File, position: Number(status[0].Position) },
+        keys: keyNames,
         changes: 0,
         applied: 0,
         reason: null,
@@ -238,6 +269,7 @@ export async function prepareSourceSync(
 }
 
 export function needsChangeRefresh(source: Resource) {
+  if (source.data.paused) return false;
   const sync = source.data.sync;
   return (
     !!source.data.datasetId &&
@@ -265,7 +297,7 @@ export async function checkpointSource(
       s.data.sync.leaseUntil < Date.now()
     )
       throw new Error("Change stream lease expired");
-    tx.update(s, {
+    return tx.update(s, {
       ...s.data,
       sync: {
         ...s.data.sync,
@@ -362,6 +394,37 @@ export function startChangeStreams(store: Store) {
         });
       });
     };
+    const pk = (source.data.sync.keys || []) as string[];
+    const rowValue = (row: Record<string, unknown> | null | undefined) =>
+      row
+        ? (JSON.parse(
+            JSON.stringify(row, (_, v) =>
+              typeof v === "bigint" ? v.toString() : v,
+            ),
+          ) as Record<string, unknown>)
+        : undefined;
+    const commitChange = async (
+      cursor: unknown,
+      pending: Omit<CdcOp, "change">[],
+      dirty: boolean,
+    ) => {
+      const updated = await checkpointSource(
+        store,
+        scope,
+        id,
+        owner,
+        cursor,
+        dirty,
+      );
+      if (dirty && pending.length && pk.length)
+        await appendJournalOps(
+          scope,
+          id,
+          Number(updated.data.sync.changes),
+          pending,
+        );
+      return updated;
+    };
     if (source.data.kind === "postgres") {
       // The library's timed acknowledgements use the received LSN, even with auto=false.
       // Disable them: only the last durably stored cursor may ever be acknowledged.
@@ -369,7 +432,7 @@ export function startChangeStreams(store: Store) {
         acknowledge: { auto: false, timeoutSeconds: 0 },
         flowControl: { enabled: true },
       });
-      let changed = false;
+      let pending: Omit<CdcOp, "change">[] = [];
       let durableCursor = source.data.sync.cursor;
       streams.set(key, {
         scope,
@@ -385,6 +448,7 @@ export function startChangeStreams(store: Store) {
       service.on("start", async () => {
         // Reconcile once on reconnect/restore: the server may have advanced its slot
         // beyond a restored metadata backup. This also catches offline schema changes.
+        // Intentionally no journal ops — the gap forces a full snapshot apply.
         if (!closed)
           await checkpointSource(
             store,
@@ -402,19 +466,36 @@ export function startChangeStreams(store: Store) {
       service.on("data", async (_lsn: string, message: Pgoutput.Message) => {
         if (closed) return;
         try {
-          if (["insert", "update", "delete", "truncate"].includes(message.tag))
-            changed = true;
+          if (message.tag === "insert") {
+            const row = rowValue(message.new);
+            pending.push({
+              op: "insert",
+              row,
+              keys: keyFields(row, pk),
+            });
+          } else if (message.tag === "update") {
+            const row = rowValue(message.new);
+            const old = rowValue(message.old || message.key || undefined);
+            pending.push({
+              op: "update",
+              row,
+              keys: keyFields(old || row, pk),
+            });
+          } else if (message.tag === "delete") {
+            const old = rowValue(message.old || message.key || undefined);
+            pending.push({
+              op: "delete",
+              keys: keyFields(old, pk),
+            });
+          } else if (message.tag === "truncate") {
+            pending.push({ op: "truncate" });
+          }
           if (message.tag === "commit" && message.commitEndLsn) {
-            await checkpointSource(
-              store,
-              scope,
-              id,
-              owner,
-              message.commitEndLsn,
-              changed,
-            );
+            const dirty = pending.length > 0;
+            const batch = pending;
+            pending = [];
+            await commitChange(message.commitEndLsn, batch, dirty);
             durableCursor = message.commitEndLsn;
-            changed = false;
             await service.acknowledge(message.commitEndLsn);
           }
         } catch {
@@ -434,8 +515,8 @@ export function startChangeStreams(store: Store) {
         .catch(() => {});
     } else {
       const zongji = new ZongJi(mysqlConfig(c));
-      let file = source.data.sync.cursor.file,
-        changed = false;
+      let file = source.data.sync.cursor.file;
+      let pending: Omit<CdcOp, "change">[] = [];
       let chain = Promise.resolve();
       streams.set(key, {
         scope,
@@ -451,6 +532,7 @@ export function startChangeStreams(store: Store) {
       zongji.on("ready", () => {
         chain = chain
           .then(async () => {
+            // Reconnect gap: force full snapshot (no journal ops).
             if (!closed)
               await checkpointSource(
                 store,
@@ -468,30 +550,54 @@ export function startChangeStreams(store: Store) {
         if (closed) return;
         const kind = event.getEventName();
         if (kind === "rotate") file = event.binlogName;
-        if (
-          [
-            "writerows",
-            "updaterows",
-            "deleterows",
-            "partialupdaterows",
-            "transactionpayload",
-          ].includes(kind)
-        )
-          changed = true;
+        if (kind === "writerows") {
+          for (const row of event.rows || []) {
+            const value = rowValue(row);
+            pending.push({
+              op: "insert",
+              row: value,
+              keys: keyFields(value, pk),
+            });
+          }
+        } else if (kind === "updaterows" || kind === "partialupdaterows") {
+          for (const row of event.rows || []) {
+            const before = rowValue(row.before);
+            const after = rowValue(row.after);
+            pending.push({
+              op: "update",
+              row: after,
+              keys: keyFields(before || after, pk),
+            });
+          }
+        } else if (kind === "deleterows") {
+          for (const row of event.rows || []) {
+            const value = rowValue(row);
+            pending.push({
+              op: "delete",
+              keys: keyFields(value, pk),
+            });
+          }
+        } else if (kind === "transactionpayload") {
+          pending.push({ op: "ddl" });
+        }
         const statement = kind === "query" ? String(event.query).trim() : "";
         const ddl =
           /^(ALTER|CREATE|DROP|RENAME|TRUNCATE)\b/i.test(statement) &&
           event.schema === c.database;
-        if (ddl) changed = true;
+        if (ddl) {
+          pending.push({
+            op: /^TRUNCATE\b/i.test(statement) ? "truncate" : "ddl",
+          });
+        }
         if (kind === "xid" || ddl || /^COMMIT\b/i.test(statement)) {
           const cursor = { file, position: event.nextPosition },
-            dirty = changed;
-          changed = false;
+            batch = pending,
+            dirty = batch.length > 0;
+          pending = [];
           zongji.connection?.pause();
           chain = chain
             .then(async () => {
-              if (!closed)
-                await checkpointSource(store, scope, id, owner, cursor, dirty);
+              if (!closed) await commitChange(cursor, batch, dirty);
             })
             .catch(fail)
             .catch(() => {})
@@ -531,7 +637,8 @@ export function startChangeStreams(store: Store) {
           const stream = streams.get(key);
           if (
             stream &&
-            (source.data.sync?.mode !== "cdc" ||
+            (source.data.paused ||
+              source.data.sync?.mode !== "cdc" ||
               source.data.secret !== stream.secret ||
               source.data.sync.leaseOwner !== owner)
           ) {
@@ -539,6 +646,7 @@ export function startChangeStreams(store: Store) {
             continue;
           }
           if (
+            source.data.paused ||
             source.data.sync?.mode !== "cdc" ||
             source.data.sync.retryAt > Date.now()
           )

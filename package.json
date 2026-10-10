@@ -1,5 +1,5 @@
 {
-  "name": "helix-foundry",
+  "name": "ros-foundry",
   "private": true,
   "license": "MIT",
   "type": "module",
@@ -19,7 +19,7 @@
     "doctor": "tsx scripts/doctor.ts",
     "migrate": "tsx scripts/migrate.ts",
     "benchmark": "tsx scripts/benchmark.ts",
-    "build:sdk": "pnpm --filter @helix-foundry/shared build && pnpm --filter @helix-foundry/sdk build"
+    "build:sdk": "pnpm --filter @ros-foundry/shared build && pnpm --filter @ros-foundry/sdk build"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.900.0",
@@ -41,6 +41,7 @@
     "fastify": "^5.6.1",
     "lucide-react": "^0.544.0",
     "mysql2": "^3.15.0",
+    "node-sql-parser": "^5.4.0",
     "pg": "^8.16.3",
     "pg-logical-replication": "2.5.0",
     "react": "^19.1.1",

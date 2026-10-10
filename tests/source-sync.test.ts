@@ -18,7 +18,50 @@ import {
   checkpointSource,
   needsChangeRefresh,
   scheduledRefresh,
+  scheduleFields,
 } from "../apps/api/src/source-sync.js";
+
+it("skips automatic refresh while paused and recomputes schedule nextRun", () => {
+  const snapshot = resource(
+    "a",
+    "source",
+    "Orders",
+    {
+      kind: "rest",
+      schedule: "*/5 * * * *",
+      nextRun: 0,
+      sync: { mode: "snapshot", status: "ready" },
+    },
+    "source",
+  );
+  expect(scheduledRefresh(snapshot)).toBe(true);
+  expect(
+    scheduledRefresh({
+      ...snapshot,
+      data: { ...snapshot.data, paused: true },
+    }),
+  ).toBe(false);
+  const cdc = resource(
+    "a",
+    "source",
+    "Orders",
+    {
+      kind: "postgres",
+      datasetId: "orders",
+      sync: { mode: "cdc", changes: 2, applied: 0 },
+    },
+    "source",
+  );
+  expect(needsChangeRefresh(cdc)).toBe(true);
+  expect(
+    needsChangeRefresh({ ...cdc, data: { ...cdc.data, paused: true } }),
+  ).toBe(false);
+  expect(scheduleFields(snapshot, "0 * * * *").schedule).toBe("0 * * * *");
+  expect(scheduleFields(snapshot, "0 * * * *").nextRun).toBeGreaterThan(
+    Date.now(),
+  );
+  expect(scheduleFields(cdc, "*/5 * * * *").nextRun).toBeNull();
+});
 
 it("prefers CDC over even an expired legacy schedule and fences checkpoint writers by workspace and lease", async () => {
   const store = new MemoryStore(),

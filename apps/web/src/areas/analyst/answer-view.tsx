@@ -203,8 +203,8 @@ export function AnswerStats({ row }: { row: Row }) {
         return (
           <div key={key} className="an-stat">
             <dt>{columnLabel(key)}</dt>
-            <dd className={numeric ? "hf-num" : undefined}>
-              {text ?? <span className="hf-null">—</span>}
+            <dd className={numeric ? "rosf-num" : undefined}>
+              {text ?? <span className="rosf-null">—</span>}
             </dd>
           </div>
         );
@@ -223,7 +223,7 @@ export function AnswerTable({ rows, label }: { rows: Row[]; label: string }) {
     [sort, setSort] = useState<GridSort>(null);
   const columns = useMemo(() => {
     const sample = rows.slice(0, 50);
-    const blank = <span className="hf-null">null</span>;
+    const blank = <span className="rosf-null">null</span>;
     return Object.keys(rows[0] || {}).map((key) => {
       const values = sample.map((r) => r[key]);
       const days =

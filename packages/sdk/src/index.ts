@@ -12,7 +12,7 @@ import type {
   HostingOptions,
   HostedConnection,
   PlanetScaleToken,
-} from "@helix-foundry/shared";
+} from "@ros-foundry/shared";
 export type {
   Bundle,
   Resource,
@@ -188,6 +188,16 @@ export class FoundryClient {
   }
   sync(sourceId: string) {
     return this.request<Resource>("/sources/" + sourceId + "/sync", {});
+  }
+  updateSourceSync(
+    sourceId: string,
+    update: { schedule?: string | null; paused?: boolean },
+  ) {
+    return this.request<Resource>(
+      "/sources/" + sourceId,
+      update,
+      "PATCH",
+    );
   }
   build(goal: string, parentId?: string) {
     return this.request<Resource>("/assistant/runs", { goal, parentId });

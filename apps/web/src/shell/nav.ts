@@ -4,6 +4,7 @@ import {
   Settings,
   Shapes,
   Sparkles,
+  Workflow,
   type LucideIcon,
 } from "lucide-react";
 import type {
@@ -16,6 +17,7 @@ import type {
 import { dataShell } from "../areas/data/shell";
 import { ontologyShell } from "../areas/ontology/shell";
 import { analystShell } from "../areas/analyst/shell";
+import { pipelinesShell } from "../areas/pipelines/shell";
 import { workspaceShell } from "../areas/workspace/shell";
 
 export type NavItem = {
@@ -32,6 +34,7 @@ const areas: AreaShell[] = [
   dataShell,
   ontologyShell,
   analystShell,
+  pipelinesShell,
   workspaceShell,
 ];
 const childrenOf = (id: SectionId) =>
@@ -61,6 +64,7 @@ export const primaryNav: NavItem[] = [
     "/records",
   ]),
   item("data", "/data", "Data", Database, ["/data", "/sources"]),
+  item("pipelines", "/pipelines", "Pipelines", Workflow, ["/pipelines"]),
   item("analyst", "/analyst", "Analyst", Sparkles, ["/analyst", "/runs"]),
 ];
 export const secondaryNav: NavItem[] = [

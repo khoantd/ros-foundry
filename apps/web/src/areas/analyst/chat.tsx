@@ -233,7 +233,7 @@ function ChatHeader({ chat, turns }: { chat: Chat; turns: number }) {
             <DropdownMenu
               label="Chat options"
               align="end"
-              triggerClassName="hf-btn hf-btn--ghost hf-btn--md hf-btn--icon"
+              triggerClassName="rosf-btn rosf-btn--ghost rosf-btn--md rosf-btn--icon"
               trigger={<Ellipsis size={16} aria-hidden />}
             >
               <MenuItem
@@ -362,7 +362,7 @@ function Conversation({ chat }: { chat: Chat }) {
           {runs.map((r) => (
             <div key={r.id} className="an-turn">
               <div className="an-question">
-                <span className="hf-sr-only">You asked: </span>
+                <span className="rosf-sr-only">You asked: </span>
                 <p>{r.data.goal}</p>
               </div>
               <Reply run={r} />
@@ -371,7 +371,7 @@ function Conversation({ chat }: { chat: Chat }) {
           {pending && (
             <div className="an-turn">
               <div className="an-question is-sending">
-                <span className="hf-sr-only">You asked: </span>
+                <span className="rosf-sr-only">You asked: </span>
                 <p>{pending}</p>
               </div>
               <div className="an-reply">
@@ -443,7 +443,7 @@ function Conversation({ chat }: { chat: Chat }) {
                 disabled={!ready}
               >
                 {pending ? (
-                  <LoaderCircle size={17} className="hf-spin" aria-hidden />
+                  <LoaderCircle size={17} className="rosf-spin" aria-hidden />
                 ) : (
                   <ArrowUp size={17} aria-hidden />
                 )}

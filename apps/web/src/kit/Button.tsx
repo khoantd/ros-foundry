@@ -28,10 +28,10 @@ const classes = (
   iconOnly?: boolean,
 ) =>
   cx(
-    "hf-btn",
-    `hf-btn--${variant}`,
-    `hf-btn--${size}`,
-    iconOnly && "hf-btn--icon",
+    "rosf-btn",
+    `rosf-btn--${variant}`,
+    `rosf-btn--${size}`,
+    iconOnly && "rosf-btn--icon",
     extra,
   );
 const iconSize = (size: ButtonSize) => (size === "sm" ? 14 : 16);
@@ -57,7 +57,7 @@ export function Button({
       {...rest}
     >
       {pending ? (
-        <LoaderCircle size={iconSize(size)} className="hf-spin" aria-hidden />
+        <LoaderCircle size={iconSize(size)} className="rosf-spin" aria-hidden />
       ) : (
         Icon && <Icon size={iconSize(size)} aria-hidden />
       )}

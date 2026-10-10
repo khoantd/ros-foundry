@@ -1,7 +1,7 @@
-name: helix-foundry
+name: ros-foundry
 x-app: &app
   build: .
-  image: helix-foundry:local
+  image: ros-foundry:local
   restart: unless-stopped
   volumes:
     - foundry-data:/data

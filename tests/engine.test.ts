@@ -74,4 +74,32 @@ describe("isolated dataset execution", () => {
       ),
     ).rejects.toThrow("Invalid storage");
   });
+  it("applies CDC row deltas onto an existing parquet snapshot", async () => {
+    await writeFile(
+      join(dir, "incoming", "a", "delta.jsonl"),
+      [
+        { _patch: "upsert", id: "a", amount: 99, region: "EU", email: "a@example.com" },
+        { _patch: "delete", id: "b" },
+        { _patch: "upsert", id: "c", amount: 5, region: "APAC", email: null },
+      ]
+        .map((r) => JSON.stringify(r))
+        .join("\n"),
+    );
+    const r = await execute(
+      {
+        mode: "patch",
+        scope: "a",
+        version: "patched",
+        baseVersion: "one",
+        keys: ["id"],
+        file: "delta.jsonl",
+      },
+      dir,
+    );
+    expect(r.profile.rows).toBe(2);
+    expect(r.profile.sample.map((row) => row.id).sort()).toEqual(["a", "c"]);
+    expect(Number(r.profile.sample.find((row) => row.id === "a")?.amount)).toBe(
+      99,
+    );
+  });
 });

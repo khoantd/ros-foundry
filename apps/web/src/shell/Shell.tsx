@@ -34,7 +34,7 @@ function RouteAnnouncer() {
       const heading = document.querySelector<HTMLElement>("#main h1");
       setText(
         heading?.textContent?.trim() ||
-          document.title.replace(/ · Helix Foundry$/, ""),
+          document.title.replace(/ · ROS Foundry$/, ""),
       );
       const active = document.activeElement;
       if (heading && (!active || active === document.body)) {
@@ -46,7 +46,7 @@ function RouteAnnouncer() {
     return () => clearTimeout(timer);
   }, [pathname]);
   return (
-    <div className="hf-sr-only" aria-live="polite" aria-atomic="true">
+    <div className="rosf-sr-only" aria-live="polite" aria-atomic="true">
       {text}
     </div>
   );
@@ -55,7 +55,7 @@ function RouteAnnouncer() {
 // If the sidebar itself fails, plain links keep the app navigable.
 function SidebarFallback() {
   return (
-    <nav aria-label="Main navigation" className="hf-sidebar-fallback">
+    <nav aria-label="Main navigation" className="rosf-sidebar-fallback">
       {[...primaryNav, ...secondaryNav].map((n) => (
         <Link key={n.id} to={n.to}>
           {n.label}
@@ -91,10 +91,10 @@ export function Shell({
   }, [pathname, current.id]);
   // The page behind the shell (scrollbars, overscroll) follows the theme.
   useEffect(() => {
-    document.documentElement.classList.add("hf-root");
+    document.documentElement.classList.add("rosf-root");
     syncThemeColor();
     return () => {
-      document.documentElement.classList.remove("hf-root");
+      document.documentElement.classList.remove("rosf-root");
       syncThemeColor();
     };
   }, []);
@@ -131,11 +131,11 @@ export function Shell({
   return (
     <ShellContext.Provider value={shell}>
       <PageVisitContext.Provider value={visit}>
-        <div className={cx("hf-shell", collapsed && "is-collapsed")}>
-          <a className="hf-skip" href="#main">
+        <div className={cx("rosf-shell", collapsed && "is-collapsed")}>
+          <a className="rosf-skip" href="#main">
             Skip to content
           </a>
-          <aside className="hf-sidebar">
+          <aside className="rosf-sidebar">
             <ChromeBoundary name="Sidebar" fallback={<SidebarFallback />}>
               <Sidebar
                 {...sidebarProps}
@@ -144,32 +144,32 @@ export function Shell({
               />
             </ChromeBoundary>
           </aside>
-          <div className="hf-main-col">
-            <header className="hf-mobile-bar">
+          <div className="rosf-main-col">
+            <header className="rosf-mobile-bar">
               <button
                 type="button"
-                className="hf-btn hf-btn--ghost hf-btn--md hf-btn--icon"
+                className="rosf-btn rosf-btn--ghost rosf-btn--md rosf-btn--icon"
                 aria-label="Open navigation"
                 onClick={() => setDrawer(true)}
               >
                 <Menu size={18} aria-hidden />
               </button>
-              <Link to="/" className="hf-brand" aria-label="Helix Foundry home">
-                <span className="hf-brand-name">
-                  helix<span>foundry</span>
+              <Link to="/" className="rosf-brand" aria-label="ROS Foundry home">
+                <span className="rosf-brand-name">
+                  ros<span>foundry</span>
                 </span>
               </Link>
-              <span className="hf-mobile-ws">{current.name}</span>
+              <span className="rosf-mobile-ws">{current.name}</span>
               <button
                 type="button"
-                className="hf-btn hf-btn--ghost hf-btn--md hf-btn--icon"
+                className="rosf-btn rosf-btn--ghost rosf-btn--md rosf-btn--icon"
                 aria-label="Search"
                 onClick={() => shell.openPalette()}
               >
                 <Search size={17} aria-hidden />
               </button>
             </header>
-            <main className="hf-main" id="main" tabIndex={-1}>
+            <main className="rosf-main" id="main" tabIndex={-1}>
               {children}
             </main>
           </div>
@@ -196,7 +196,7 @@ export function Shell({
               title="Navigation"
               hideTitle
               variant="drawer"
-              className="hf-nav-drawer"
+              className="rosf-nav-drawer"
               onClose={() => setDrawer(false)}
             >
               <ChromeBoundary name="Navigation" fallback={<SidebarFallback />}>

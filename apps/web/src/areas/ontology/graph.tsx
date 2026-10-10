@@ -154,8 +154,8 @@ export function ObjectGraph({
       if (!shown(s) || !shown(t)) continue;
       const lit = !!active && (s.id === active || t.id === active);
       ctx.strokeStyle = lit
-        ? token("--hf-text-2")
-        : token("--hf-border-strong");
+        ? token("--rosf-text-2")
+        : token("--rosf-border-strong");
       ctx.globalAlpha = lit ? 0.9 : active ? 0.12 : 0.55;
       ctx.lineWidth = (lit ? 1.6 : 1) / k;
       ctx.beginPath();
@@ -164,8 +164,8 @@ export function ObjectGraph({
       ctx.stroke();
     }
     // Records: a surface ring keeps overlapping dots apart.
-    const surface = token("--hf-surface"),
-      faint = token("--hf-faint");
+    const surface = token("--rosf-surface"),
+      faint = token("--rosf-faint");
     for (const n of nodes.current) {
       if (!shown(n)) continue;
       ctx.globalAlpha = active && !near.has(n.id) ? 0.2 : 1;
@@ -180,7 +180,7 @@ export function ObjectGraph({
         ctx.beginPath();
         ctx.arc(n.x!, n.y!, n.r + 3 / k, 0, Math.PI * 2);
         ctx.lineWidth = 2 / k;
-        ctx.strokeStyle = token("--hf-ink");
+        ctx.strokeStyle = token("--rosf-ink");
         ctx.stroke();
       }
     }
@@ -189,7 +189,7 @@ export function ObjectGraph({
     // that would overlap one already placed is left out.
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.globalAlpha = 1;
-    ctx.font = `12px ${token("--hf-font-sans") || "sans-serif"}`;
+    ctx.font = `12px ${token("--rosf-font-sans") || "sans-serif"}`;
     ctx.textBaseline = "middle";
     ctx.lineJoin = "round";
     ctx.lineWidth = 3;
@@ -221,7 +221,7 @@ export function ObjectGraph({
       placed.push(box);
       ctx.strokeText(text, lx, sy);
       ctx.fillStyle =
-        n.id === active ? token("--hf-text") : token("--hf-text-2");
+        n.id === active ? token("--rosf-text") : token("--rosf-text-2");
       ctx.fillText(text, lx, sy);
     }
   };

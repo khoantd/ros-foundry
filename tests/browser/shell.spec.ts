@@ -39,11 +39,11 @@ test("workspace shell: navigation, search, setup gate and errors", async ({
       nav.getByRole("link", { name: label, exact: true }),
     ).toBeVisible();
   expect(
-    (await nav.locator(".hf-nav-link").allInnerTexts()).map((t) => t.trim()),
+    (await nav.locator(".rosf-nav-link").allInnerTexts()).map((t) => t.trim()),
   ).toEqual(sections);
   // Settings sits in the sidebar footer beside the Preferences menu, which
   // names this computer rather than a signed-in person.
-  const footer = page.locator(".hf-sidebar-foot");
+  const footer = page.locator(".rosf-sidebar-foot");
   await expect(footer.getByRole("link", { name: "Settings" })).toBeVisible();
   const preferences = footer.getByRole("button", {
     name: "Preferences",
@@ -87,7 +87,7 @@ test("workspace shell: navigation, search, setup gate and errors", async ({
   // keep their section active.
   await nav.getByRole("link", { name: "Ontology", exact: true }).click();
   await expect(page).toHaveURL(/\/ontology\/explore$/);
-  await expect(nav.locator(".hf-subnav a")).toHaveText([
+  await expect(nav.locator(".rosf-subnav a")).toHaveText([
     "Explorer",
     "Object types",
   ]);
@@ -147,7 +147,7 @@ test("workspace shell: navigation, search, setup gate and errors", async ({
     "page",
   );
   expect(
-    (await nav.locator(".hf-nav-link").allInnerTexts()).map((t) => t.trim()),
+    (await nav.locator(".rosf-nav-link").allInnerTexts()).map((t) => t.trim()),
   ).toEqual(sections);
   // Search finds the chat by its question.
   await page.keyboard.press("ControlOrMeta+k");

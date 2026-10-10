@@ -17,7 +17,7 @@ export function Page({
   children: ReactNode;
 }) {
   return (
-    <div className={cx("hf-page", `hf-page--${width}`, className)}>
+    <div className={cx("rosf-page", `rosf-page--${width}`, className)}>
       {children}
     </div>
   );
@@ -25,7 +25,7 @@ export function Page({
 
 export function Breadcrumbs({ items }: { items: Crumb[] }) {
   return (
-    <nav aria-label="Breadcrumb" className="hf-breadcrumbs">
+    <nav aria-label="Breadcrumb" className="rosf-breadcrumbs">
       <ol>
         {items.map((c, i) => (
           <li key={i}>
@@ -74,23 +74,23 @@ export function PageHeader({
 }) {
   useTitle(documentTitle ?? (typeof title === "string" ? title : undefined));
   return (
-    <header className={cx("hf-page-header", !!tabs && "has-tabs", className)}>
+    <header className={cx("rosf-page-header", !!tabs && "has-tabs", className)}>
       {breadcrumbs && breadcrumbs.length > 0 && (
         <Breadcrumbs items={breadcrumbs} />
       )}
-      <div className="hf-page-header-row">
-        <div className="hf-page-header-title">
-          {icon && <div className="hf-page-header-icon">{icon}</div>}
+      <div className="rosf-page-header-row">
+        <div className="rosf-page-header-title">
+          {icon && <div className="rosf-page-header-icon">{icon}</div>}
           <div>
-            {eyebrow && <div className="hf-eyebrow">{eyebrow}</div>}
+            {eyebrow && <div className="rosf-eyebrow">{eyebrow}</div>}
             <h1>{title}</h1>
-            {subtitle && <p className="hf-page-header-subtitle">{subtitle}</p>}
-            {meta && <div className="hf-page-header-meta">{meta}</div>}
+            {subtitle && <p className="rosf-page-header-subtitle">{subtitle}</p>}
+            {meta && <div className="rosf-page-header-meta">{meta}</div>}
           </div>
         </div>
-        {actions && <div className="hf-page-header-actions">{actions}</div>}
+        {actions && <div className="rosf-page-header-actions">{actions}</div>}
       </div>
-      {tabs && <div className="hf-page-header-tabs">{tabs}</div>}
+      {tabs && <div className="rosf-page-header-tabs">{tabs}</div>}
     </header>
   );
 }

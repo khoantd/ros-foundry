@@ -163,7 +163,7 @@ export function useTitle(title?: string) {
   useEffect(() => {
     if (!title) return;
     const previous = document.title;
-    document.title = `${title} · Helix Foundry`;
+    document.title = `${title} · ROS Foundry`;
     visit(title);
     return () => {
       document.title = previous;
