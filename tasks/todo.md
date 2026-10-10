@@ -13,6 +13,7 @@
 
 ## Backlog
 
-- [ ] Optional: rename disk folder / GitHub remote
+- [x] GitHub repo https://github.com/khoantd/ros-foundry (origin)
 - [ ] Promote Company Brain `ros-foundry` product to approved
+- [ ] Optional: rename on-disk folder
 - [ ] Optional: `SqlView` chrome on Analyst `.an-sql`

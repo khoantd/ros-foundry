@@ -24,6 +24,7 @@ Full-identity rename Helix Foundry → **ROS Foundry** (Royal Solution portfolio
 - Company Brain proposed: `04-PRODUCTS/ros-foundry/PRODUCT.md`.
 - Stale kit test: `/pipelines` → section `pipelines`.
 - `pnpm typecheck` + `pnpm test` green (188 passed).
+- GitHub: https://github.com/khoantd/ros-foundry (`origin`); old remote kept as `helix-foundry`.
 
 ## In progress
 
@@ -32,8 +33,8 @@ Full-identity rename Helix Foundry → **ROS Foundry** (Royal Solution portfolio
 
 ## Next
 
-1. Optional: rename on-disk folder / GitHub remote to `ros-foundry`.
-2. Promote Company Brain product to approved when ready.
+1. Promote Company Brain product to approved when ready.
+2. Optional: rename on-disk folder to `ros-foundry`.
 3. Optional: apply `SqlView` chrome to Analyst `.an-sql`.
 
 ## Decisions
