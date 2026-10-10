@@ -13,7 +13,7 @@
 
 - **Language:** TypeScript (Node ≥24, ESM), React 19
 - **Package manager:** pnpm 10.7 (workspace: `packages/*`)
-- **API:** Fastify 5 (`apps/api`) — loopback-only, no accounts
+- **API:** Fastify 5 (`apps/api`) — loopback-only by default; `AUTH_MODE=hosted` enables accounts/invites
 - **Web:** Vite 7 + React Router 7 + TanStack Query + Tailwind 4 (`apps/web`)
 - **Query engine:** DuckDB via isolated executor (`services/executor`)
 - **Graph / metadata:** HelixDB (`@helix-db/helix-db` 3.2)
@@ -87,7 +87,7 @@
 
 ## Notes
 
-- Local-first: no accounts; anyone who can reach the app is owner. Never expose beyond loopback.
+- Local-first default: no accounts; anyone who can reach the app is owner. Never expose beyond loopback unless `AUTH_MODE=hosted` and a private network for Helix/executor.
 - Change `PUBLIC_PORT` and `PUBLIC_ORIGIN` together or browser saves fail with `403 Origin is not allowed`.
 - Data path: connectors → Parquet snapshots → DuckDB executor; ontology/jobs/tokens live in HelixDB.
 - UI areas: Home (metrics), Ontology (explorer), Data (sources), Analyst (Q&A + proposals), Settings (AI + API tokens).

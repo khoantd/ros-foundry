@@ -13,6 +13,7 @@ import {
   datasetTable,
 } from "../../../../packages/shared/src/index.js";
 import { config } from "../config.js";
+import { assertCanAddSources, assertStorageRoom } from "../license.js";
 import { assert, seal } from "../security.js";
 import { resource, transaction, type Store } from "../store.js";
 import { discover } from "../connectors.js";
@@ -65,6 +66,7 @@ export function registerDataRoutes(
           datasetId: z.string().optional(),
         })
         .parse(req.body);
+    await assertStorageRoom(store, a.scope);
     if (b.datasetId)
       assert(
         (await store.get(a.scope, b.datasetId))?.kind === "dataset",
@@ -77,6 +79,7 @@ export function registerDataRoutes(
     const a = await access(req, "editor"),
       part = await req.file();
     assert(part, "Select a file");
+    await assertStorageRoom(store, a.scope);
     const ext = part.filename.split(".").at(-1)?.toLowerCase();
     assert(
       ext && ["csv", "json", "jsonl", "parquet"].includes(ext),
@@ -170,6 +173,7 @@ export function registerDataRoutes(
   app.post("/api/v1/workspaces/:w/sources", async (req) => {
     const a = await access(req, "owner"),
       b = SourceSchema.parse(req.body);
+    await assertCanAddSources(store, a.scope);
     if (b.schedule) CronExpressionParser.parse(b.schedule, { tz: "UTC" });
     const resolved = await resolveHostedConfig(
       store,

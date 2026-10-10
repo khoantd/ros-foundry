@@ -9,6 +9,10 @@ import { workspacePaths } from "./areas/workspace/paths";
 export const paths = {
   home: () => "/",
   onboarding: () => "/onboarding",
+  login: () => "/login",
+  register: () => "/register",
+  invite: (token?: string) =>
+    "/invite" + (token ? "?token=" + encodeURIComponent(token) : ""),
   ...dataPaths,
   ...ontologyPaths,
   ...analystPaths,

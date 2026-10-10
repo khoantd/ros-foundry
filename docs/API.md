@@ -1,10 +1,36 @@
 # Developer API
 
-All routes use `/api/v1`. There are no accounts or sign-in: a request without an `Authorization` header acts as the person using this computer, who owns every workspace. Scripts and the SDK send `Authorization: Bearer TOKEN` with a token created in **Settings → Developer tools** (POST `/workspaces/:workspaceId/tokens` with `{ name, readOnly }`). Tokens are scoped to a workspace, can be read-only, and cannot create workspaces. An invalid or revoked token, or a non-Bearer `Authorization` header, is rejected with 401 rather than treated as the local person. The `Host` header must be a loopback name or the `APP_ORIGIN` host, and mutation requests from browsers must have the configured `APP_ORIGIN` or its loopback equivalent.
+All routes use `/api/v1`.
+
+**Local mode** (`AUTH_MODE=local`, default): there is no sign-in. A request without an `Authorization` header acts as the person using this computer, who owns every workspace.
+
+**Hosted mode** (`AUTH_MODE=hosted`): unauthenticated requests receive 401. Browser sessions use the `foundry_session` httpOnly cookie from `/auth/bootstrap`, `/auth/login`, or `/invitations/accept`. See auth routes below.
+
+Scripts and the SDK send `Authorization: Bearer TOKEN` with a token created in **Settings → Developer tools** (POST `/workspaces/:workspaceId/tokens` with `{ name, readOnly }`). Tokens are scoped to a workspace, can be read-only, and cannot create workspaces. An invalid or revoked token, or a non-Bearer `Authorization` header, is rejected with 401 rather than treated as the local person. The `Host` header must be a loopback name or the `APP_ORIGIN` host, and mutation requests from browsers must have the configured `APP_ORIGIN` or its loopback equivalent.
 
 Workspace routes begin `/workspaces/:workspaceId`.
 
 Each area owns its section below; add new routes to your own section.
+
+### Auth (hosted mode only)
+
+| Method / path | Input / result |
+| --- | --- |
+| GET `/auth/status` | `{ mode, bootstrapped, authenticated }` |
+| POST `/auth/bootstrap` | `{ email, password, name }` → owner + workspace + session cookie |
+| POST `/auth/login` | `{ email, password }` → session cookie |
+| POST `/auth/logout` | clears session cookie |
+| GET `/workspaces/:w/members` | members, pending invitations, seat usage |
+| POST `/workspaces/:w/invitations` | `{ email, role }` → one-time `token` (owner); seat limit via `LICENSE_SEATS` |
+| POST `/invitations/accept` | `{ token, password, name? }` → membership + session cookie |
+
+### License and quotas
+
+| Method / path | Input / result |
+| --- | --- |
+| GET `/workspaces/:w/license` | `{ license, usage, alerts }` — seats, sources, storage, AI units vs plan limits (0 = unlimited). Exceeding a hard limit returns `403` with `code: "QUOTA_EXCEEDED"`. |
+
+Env (see `.env.example`): `LICENSE_SEATS`, `LICENSE_MAX_SOURCES`, `LICENSE_MAX_STORAGE_BYTES`, `LICENSE_AI_UNITS_MONTHLY`, optional `CONTROL_PLANE_URL` + `LICENSE_INSTANCE_ID` for heartbeat refresh.
 
 ### Shared (foundation)
 

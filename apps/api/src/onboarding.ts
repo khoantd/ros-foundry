@@ -21,6 +21,7 @@ import {
 import { transaction, resource, now, type Store, type Tx } from "./store.js";
 import { assert, digest, seal, unseal, AppError } from "./security.js";
 import { config } from "./config.js";
+import { assertCanAddSources, assertStorageRoom } from "./license.js";
 import { discover } from "./connectors.js";
 import { providerSettings, retried } from "./assistant.js";
 import { onboardingState, publicResource } from "./onboarding-state.js";
@@ -141,6 +142,10 @@ export function registerOnboarding(
       );
       return prior.data.result;
     }
+    const selections = [
+      ...new Map(body.selections.map((s) => [JSON.stringify(s), s])).values(),
+    ];
+    await assertCanAddSources(store, a.scope, selections.length);
     const resolved = await resolveHostedConfig(
       store,
       a.scope,
@@ -148,9 +153,6 @@ export function registerOnboarding(
       body.config,
     );
     const discovery: any = await testedConnection(body.kind, resolved.config);
-    const selections = [
-      ...new Map(body.selections.map((s) => [JSON.stringify(s), s])).values(),
-    ];
     for (const s of selections) {
       if (body.kind === "mysql" || body.kind === "postgres")
         assert(
@@ -266,6 +268,7 @@ export function registerOnboarding(
   });
   app.post(base + "/uploads", async (req: any) => {
     const a = await access(req, "editor");
+    await assertStorageRoom(store, a.scope);
     const operationId = z
       .string()
       .min(8)

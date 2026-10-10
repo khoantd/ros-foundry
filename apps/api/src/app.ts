@@ -18,8 +18,18 @@ import {
   type Resource,
   type Role,
 } from "../../../packages/shared/src/index.js";
-import { config } from "./config.js";
+import { config, type AuthMode } from "./config.js";
 import { assert, digest } from "./security.js";
+import { registerAuthRoutes, sessionFromCookie } from "./auth.js";
+import {
+  applyLicense,
+  bindUsageStore,
+  getLicense,
+  licenseFromConfig,
+  measureUsage,
+  quotaAlerts,
+  type LicenseDocument,
+} from "./license.js";
 import { resource, transaction, type Store } from "./store.js";
 import {
   generationKinds,
@@ -32,11 +42,15 @@ import { registerPipelinesRoutes } from "./routes/pipelines.js";
 import { recordLabel, registerOntologyRoutes } from "./routes/ontology.js";
 import { registerAnalystRoutes } from "./routes/analyst.js";
 import { registerWorkspaceRoutes } from "./routes/workspace.js";
-// ROS Foundry runs on one computer for one person, with no sign-in. That
-// person is the installation's owner; their session never expires because
-// provider sign-in (hosting.ts) is bound to a session.
+// Local mode: one computer, one person, no sign-in. Hosted mode: email/password
+// sessions and invites; unauthenticated requests never become a local owner.
 const LOCAL_USER = "local-user",
   LOCAL_SESSION = "local-session";
+export type AppOptions = {
+  authMode?: AuthMode;
+  licenseSeats?: number;
+  license?: Partial<LicenseDocument>;
+};
 const isLoopback = (host: string) =>
   host === "localhost" ||
   host.endsWith(".localhost") ||
@@ -60,7 +74,20 @@ function sameApp(origin: string) {
   }
 }
 const scrub = publicResource;
-export async function createApp(store: Store) {
+export async function createApp(store: Store, options: AppOptions = {}) {
+  const authMode = options.authMode ?? config.authMode;
+  if (options.authMode !== undefined) config.authMode = authMode;
+  applyLicense(
+    licenseFromConfig({
+      ...(options.licenseSeats !== undefined
+        ? { seats: options.licenseSeats }
+        : {}),
+      ...options.license,
+    }),
+  );
+  bindUsageStore(store);
+  const licenseSeats = getLicense().seats;
+  config.licenseSeats = licenseSeats;
   const app = Fastify({
     logger:
       process.env.NODE_ENV !== "test"
@@ -112,7 +139,7 @@ export async function createApp(store: Store) {
       : helixLimited
         ? 429
         : e.statusCode || 500;
-    reply.code(status).send({
+    const payload: { error: string; code?: string } = {
       error:
         status === 500
           ? "Internal error; check server logs"
@@ -123,7 +150,9 @@ export async function createApp(store: Store) {
                   .map((x: any) => x.path.join(".") + ": " + x.message)
                   .join("; ")
               : e.message,
-    });
+    };
+    if (typeof e?.code === "string" && e.code) payload.code = e.code;
+    reply.code(status).send(payload);
     if (status === 500) req.log.error(e);
   });
   // With no sign-in, these checks keep other sites out: only names for this
@@ -141,22 +170,30 @@ export async function createApp(store: Store) {
       assert(sameApp(req.headers.origin), "Origin is not allowed", 403);
   });
   // Scripts and the SDK may still use an API token; a token that is wrong
-  // fails rather than falling back to the local owner.
+  // fails rather than falling back to the local owner. Hosted browser sessions
+  // use the foundry_session cookie.
   async function user(req: any) {
     const header = req.headers.authorization;
-    if (header === undefined) return localIdentity();
-    const bearer = /^Bearer (.+)$/.exec(header)?.[1];
-    assert(bearer, "Use an API token: Authorization: Bearer <token>", 401);
-    const t = await store.get("global", digest(bearer));
-    assert(
-      t?.kind === "token" &&
-        (!t.data.expiresAt || t.data.expiresAt > Date.now()),
-      "API token is invalid or revoked",
-      401,
-    );
-    const u = await store.get("global", t.data.userId);
-    assert(u, "API token is invalid or revoked", 401);
-    return { user: u, session: t };
+    if (header !== undefined) {
+      const bearer = /^Bearer (.+)$/.exec(header)?.[1];
+      assert(bearer, "Use an API token: Authorization: Bearer <token>", 401);
+      const t = await store.get("global", digest(bearer));
+      assert(
+        t?.kind === "token" &&
+          (!t.data.expiresAt || t.data.expiresAt > Date.now()),
+        "API token is invalid or revoked",
+        401,
+      );
+      const u = await store.get("global", t.data.userId);
+      assert(u, "API token is invalid or revoked", 401);
+      return { user: u, session: t };
+    }
+    if (authMode === "hosted") {
+      const session = await sessionFromCookie(store, req);
+      assert(session, "Sign in required", 401);
+      return session;
+    }
+    return localIdentity();
   }
   async function access(
     req: any,
@@ -435,6 +472,23 @@ export async function createApp(store: Store) {
         : reply.sendFile("index.html"),
     );
   }
+  registerAuthRoutes(app, store, {
+    authMode,
+    licenseSeats,
+    user,
+    access,
+    newWorkspace,
+  });
+  app.get("/api/v1/workspaces/:w/license", async (req) => {
+    const a = await access(req);
+    const license = getLicense();
+    const usage = await measureUsage(store, a.scope);
+    return {
+      license,
+      usage,
+      alerts: quotaAlerts(license, usage),
+    };
+  });
   registerOnboarding(app, store, access);
   registerHosting(app, store, access);
   // Area route modules; each area owns its own file under ./routes.

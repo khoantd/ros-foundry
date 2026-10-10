@@ -151,7 +151,7 @@ Data lives in three Docker volumes:
 
 ## Security
 
-ROS Foundry is local-first: one person per computer, with no accounts and no sign-in. Because of that, the API only listens on this computer.
+ROS Foundry is local-first by default: one person per computer, with no accounts and no sign-in. Because of that, the API only listens on this computer. Set `AUTH_MODE=hosted` for single-tenant hosted installs (email/password, invites, seat limits via `LICENSE_SEATS`); then unauthenticated requests are rejected and the browser uses a session cookie. Switching an existing local database to hosted still lets you create the first owner account — the passwordless local user is not treated as a hosted owner. Optional plan quotas (`LICENSE_MAX_SOURCES`, `LICENSE_MAX_STORAGE_BYTES`, `LICENSE_AI_UNITS_MONTHLY`) enforce source, storage, and AI usage; Settings → Usage shows current consumption. When `CONTROL_PLANE_URL` is set, the instance heartbeats usage and can refresh the license document.
 
 - `HOST` must be a loopback address unless `ALLOW_NETWORK_ACCESS=true`. Compose sets that flag because it publishes the port on `127.0.0.1` only.
 - Do not expose the app to a network or put it behind a reverse proxy, tunnel or port forward. HelixDB, Ollama and the executor must remain private.

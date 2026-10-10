@@ -4,7 +4,7 @@ import Proposals from "../../review";
 import { Page } from "../../kit";
 export { HomePage } from "./home";
 
-// /settings (?tab=models|team|developer)
+// /settings (?tab=models|team|developer); Team invites require AUTH_MODE=hosted
 export function WorkspaceSettingsPage() {
   return (
     <Page>

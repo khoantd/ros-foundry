@@ -33,6 +33,12 @@ import {
 } from "./shell/ErrorBoundary";
 import { applyTheme, readTheme } from "./shell/theme";
 import { paths } from "./paths";
+import {
+  HostedAuthGate,
+  InvitePage,
+  LoginPage,
+  RegisterPage,
+} from "./auth";
 import "./style.css";
 import "./minimal.css";
 import "./workspace.css";
@@ -162,12 +168,25 @@ function SetupGate({
 // the dataset page; viewers are sent to "Open data").
 const ungated = /^\/(proposals|settings|data|sources|explore)(\/|$)/;
 
+const authPath = /^\/(login|register|invite)(\/|$)/;
+
 function App() {
   const location = useLocation();
+  const onAuthRoute = authPath.test(location.pathname);
   const me = useQuery({
     queryKey: ["me"],
     queryFn: () => api("/me"),
     retry: false,
+    enabled: !onAuthRoute,
+  });
+  const needsHostedGate =
+    onAuthRoute ||
+    (me.isError && me.error instanceof ApiError && me.error.status === 401);
+  const authStatus = useQuery({
+    queryKey: ["auth-status"],
+    queryFn: () => api("/auth/status"),
+    retry: false,
+    enabled: needsHostedGate,
   });
   const [chosen, setChosen] = useState(() => readStorage("foundry.workspace"));
   const [toast, setToast] = useState<{ text: string; error: boolean } | null>(
@@ -202,8 +221,51 @@ function App() {
     const timer = setTimeout(() => setToast(null), 6000);
     return () => clearTimeout(timer);
   }, [toast]);
-  // No sign-in: the API sets up this computer's workspace on first run.
+  if (onAuthRoute) {
+    if (authStatus.isPending) return <Loading />;
+    if (authStatus.data?.mode === "hosted")
+      return (
+        <Routes>
+          <Route
+            path="/login"
+            element={
+              <LoginPage allowRegister={!authStatus.data.bootstrapped} />
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              authStatus.data.bootstrapped ? (
+                <Navigate to={paths.login()} replace />
+              ) : (
+                <RegisterPage />
+              )
+            }
+          />
+          <Route path="/invite" element={<InvitePage />} />
+          <Route
+            path="*"
+            element={
+              <Navigate
+                to={
+                  authStatus.data.bootstrapped
+                    ? paths.login()
+                    : paths.register()
+                }
+                replace
+              />
+            }
+          />
+        </Routes>
+      );
+    return <Navigate to={paths.home()} replace />;
+  }
   if (me.isPending) return <Loading />;
+  if (me.isError && me.error instanceof ApiError && me.error.status === 401) {
+    if (authStatus.isPending) return <Loading />;
+    if (authStatus.data?.mode === "hosted")
+      return <HostedAuthGate status={authStatus.data} />;
+  }
   if (!me.data || !selected)
     return (
       <div className="rosf-app rosf-center">

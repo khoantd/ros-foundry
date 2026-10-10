@@ -41,6 +41,7 @@ export class AppError extends Error {
   constructor(
     public statusCode: number,
     message: string,
+    public code?: string,
   ) {
     super(message);
   }
@@ -49,8 +50,9 @@ export function assert(
   condition: unknown,
   message: string,
   status = 400,
+  code?: string,
 ): asserts condition {
-  if (!condition) throw new AppError(status, message);
+  if (!condition) throw new AppError(status, message, code);
 }
 export function redact(message: string) {
   return message

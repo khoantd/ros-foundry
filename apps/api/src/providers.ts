@@ -6,6 +6,11 @@ import type {
   ProviderSettings,
 } from "../../../packages/shared/src/index.js";
 import { config } from "./config.js";
+import {
+  assertAiUnitsAvailable,
+  getUsageStore,
+  recordAiUnits,
+} from "./license.js";
 import { assert, AppError } from "./security.js";
 export class Provider implements ModelProvider {
   private verified = false;
@@ -16,6 +21,8 @@ export class Provider implements ModelProvider {
     schema: Record<string, unknown>,
     signal?: AbortSignal,
   ) {
+    const meter = getUsageStore();
+    if (meter) await assertAiUnitsAvailable(meter, 1);
     if (!this.verified) {
       await verifyPinnedModel(this.settings);
       this.verified = true;
@@ -92,6 +99,7 @@ export class Provider implements ModelProvider {
       };
     }
     const abort = signal || AbortSignal.timeout(s.timeoutSeconds * 1000);
+    let result: { value: unknown; tokens: number };
     if (s.provider === "local") {
       const r = await postLocal(url, JSON.stringify(body), abort);
       assert(
@@ -104,56 +112,59 @@ export class Provider implements ModelProvider {
         data.done_reason !== "length",
         "The local model ran out of room for its answer. Remove some datasets from setup or choose Claude or OpenAI.",
       );
-      return {
+      result = {
         value: withoutNullOptionals(JSON.parse(data.content)),
         tokens: data.prompt_eval_count + data.eval_count,
       };
-    }
-    const response = await fetch(url, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-      signal: abort,
-    });
-    if (!response.ok) {
-      const detail = (await response.text().catch(() => "")).trim();
-      // Prefer the provider's short message when present; never log the key.
-      let hint = detail.slice(0, 300);
-      try {
-        const parsed = JSON.parse(detail);
-        hint =
-          parsed?.error?.message ||
-          parsed?.message ||
-          parsed?.error?.code ||
-          hint;
-      } catch {
-        /* plain text body */
-      }
-      throw new AppError(
-        502,
-        `${s.provider} returned HTTP ${response.status}${
-          hint ? `: ${hint}` : ""
-        }. Check the model, credentials, and provider quota.`,
-      );
-    }
-    let value: unknown,
-      tokens = 0;
-    const data = (await response.json()) as any;
-    if (s.provider === "claude") {
-      value = data.content.find(
-        (x: any) => x.type === "tool_use" && x.name === "submit",
-      )?.input;
-      tokens =
-        (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0);
     } else {
-      const text = data.output
-        ?.flatMap((x: any) => x.content || [])
-        .find((x: any) => x.type === "output_text")?.text;
-      assert(text, "Model did not return a structured response");
-      value = JSON.parse(text);
-      tokens = data.usage?.total_tokens || 0;
+      const response = await fetch(url, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+        signal: abort,
+      });
+      if (!response.ok) {
+        const detail = (await response.text().catch(() => "")).trim();
+        // Prefer the provider's short message when present; never log the key.
+        let hint = detail.slice(0, 300);
+        try {
+          const parsed = JSON.parse(detail);
+          hint =
+            parsed?.error?.message ||
+            parsed?.message ||
+            parsed?.error?.code ||
+            hint;
+        } catch {
+          /* plain text body */
+        }
+        throw new AppError(
+          502,
+          `${s.provider} returned HTTP ${response.status}${
+            hint ? `: ${hint}` : ""
+          }. Check the model, credentials, and provider quota.`,
+        );
+      }
+      let value: unknown,
+        tokens = 0;
+      const data = (await response.json()) as any;
+      if (s.provider === "claude") {
+        value = data.content.find(
+          (x: any) => x.type === "tool_use" && x.name === "submit",
+        )?.input;
+        tokens =
+          (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0);
+      } else {
+        const text = data.output
+          ?.flatMap((x: any) => x.content || [])
+          .find((x: any) => x.type === "output_text")?.text;
+        assert(text, "Model did not return a structured response");
+        value = JSON.parse(text);
+        tokens = data.usage?.total_tokens || 0;
+      }
+      result = { value: withoutNullOptionals(value), tokens };
     }
-    return { value: withoutNullOptionals(value), tokens };
+    if (meter) await recordAiUnits(meter, 1);
+    return result;
   }
 }
 // Ollama sends no headers until it has read the whole prompt, which can take

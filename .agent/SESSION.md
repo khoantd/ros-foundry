@@ -13,59 +13,59 @@
 
 ## Goal
 
-Full-identity rename Helix Foundry → **ROS Foundry** (Royal Solution portfolio alignment).
+Single-tenant commercial SaaS MVP — Phase 2 license quotas + heartbeat (local-first default unchanged).
 
 ## Done
 
-- Packages: root `ros-foundry`, `@ros-foundry/shared`, `@ros-foundry/sdk`; lockfile refreshed.
-- Compose / scripts / health: `ros-foundry`; credential labels `ROS Foundry …`.
-- Web brand + CSS: `--rosf-*` tokens, `rosf-*` classes, sidebar lockup `ros`+`foundry`.
-- Docs, logos (text SVG), OPERATIONS volume-migration note.
-- Company Brain proposed: `04-PRODUCTS/ros-foundry/PRODUCT.md`.
-- Stale kit test: `/pipelines` → section `pipelines`.
-- `pnpm typecheck` + `pnpm test` green (188 passed).
-- GitHub: https://github.com/khoantd/ros-foundry (`origin`); old remote kept as `helix-foundry`.
+- ROS Foundry rename (packages, compose, brand, docs, GitHub origin).
+- Pipeline live build status; catalog repair; OpenAI schema strip; Helix 429 / empty JSON fixes.
+
+## Done (this session)
+
+- Phase 1 hosted auth (prior): `AUTH_MODE`, invites, Settings → Team, `tests/auth-hosted.test.ts`.
+- Phase 2 license + quotas + heartbeat stub:
+  - [`apps/api/src/license.ts`](apps/api/src/license.ts): license doc, usage meter, `QUOTA_EXCEEDED`, heartbeat
+  - Config / `.env.example`: `LICENSE_MAX_*`, `LICENSE_AI_UNITS_MONTHLY`, `CONTROL_PLANE_URL`, `LICENSE_INSTANCE_ID`, `LICENSE_HEARTBEAT_MS`
+  - Enforce: source create (data + onboarding), storage (upload/ingest), AI units (`Provider.generate`), seats (auth via license)
+  - `GET /api/v1/workspaces/:w/license` → `{ license, usage, alerts }`
+  - Web: Settings → Usage
+  - Tests: [`tests/license-quotas.test.ts`](tests/license-quotas.test.ts)
+  - Docs: `docs/API.md`, `docs/GUIDE.md`
+- Fix: local→hosted bootstrap blocked by passwordless `local-user` owner (`hostedOwner` check; claim + transfer workspaces; register route UX).
 
 ## In progress
 
 - _(none)_
 - **Blockers:** none
 
-## Done (this session)
-
-- Fixed onboarding AI-choice save error (`JSON.parse: unexpected end of data`): `api()` now handles empty/non-JSON proxy bodies; clearer Helix 429 messages; `useSetup` backs off on 429; SetupGate passes error through.
-- Resolved Helix Cloud 429s: `.env` pointed at local HelixDB `http://127.0.0.1:6996`; idle onboarding poll slowed to 8s; provider-job included in settling polls.
-- Local workspace `09882d97-…` responds without rate limits (~30ms); Cloud workspace id stays on Cloud only.
-- Fixed OpenAI HTTP 400 on pipeline generation: `strictSchema` strips `propertyNames` (from `z.record`) and empty enums; provider errors now include OpenAI’s message. Failed review run advanced to `awaiting_review`.
-- Fixed Review Catalog Errors from stale `d_pipeline_*` after Prepare/repair: `validateBundle` realigns SQL table refs, expands query inputs from SQL, topo-sorts cross-pipeline deps (`apps/api/src/assistant.ts` + `tests/workflow.test.ts`).
-- Pipeline detail shows live build status (queued → running → succeeded/failed) from jobs + live events; Run now disabled while building (`build-status.ts`, `detail.tsx`).
-
 ## Next
 
-1. Re-run Prepare → Review on the sample workspace to confirm Catalog Errors are gone.
-2. Promote Company Brain product to approved when ready.
-3. Optional: rename on-disk folder to `ros-foundry`.
-4. Optional: apply `SqlView` chrome to Analyst `.an-sql`.
-5. Re-enable Helix Cloud in `.env` only when needed (commented credentials kept).
+1. Dogfood: local AI is up (`brew services start ollama`, `qwen3:4b` pulled); provider set to local after Prepare local fix.
+2. Phase 3: control plane + Stripe + per-tenant provisioner (real heartbeat consumer).
+3. Phase 4–5: marketing funnel + ops (backups, suspend).
 
 ## Decisions
 
-- Keep HelixDB / `HELIX_*` / helix Compose service (engine, not brand).
-- Keep SDK class names `FoundryClient` / `FoundryError`.
-- CSS prefix `rosf` (not `rf`) for clarity.
-- Existing Docker volumes: keep `COMPOSE_PROJECT_NAME=helix-foundry` or backup → restore.
+- Tenancy: single-tenant hosted (one stack per customer), not shared multi-tenant data plane.
+- Auth: email/password + invites in-app (scrypt); no Clerk/Auth0 for MVP.
+- Local mode remains default; auth routes 404 when not hosted.
+- Quotas: 0 = unlimited; AI unit = one successful `Provider.generate` call per calendar month (UTC).
+- Heartbeat: stub until Phase 3 — no-op without `CONTROL_PLANE_URL`; when set, POST usage and apply returned license.
 
 ## Gotchas
 
-- `concurrently -k` kills the whole stack if one child (e.g. executor) dies.
-- Compose project rename creates new volumes by default.
-- Path-based imports of `packages/shared/src` did not need package-name updates.
+- Prepare local needs Ollama on `OLLAMA_URL` (default `:11434`). Without it the job fails as “Local AI is unavailable”; home shows finding `Failed Prepare local`.
+- `concurrently -k` kills the whole stack if one child dies.
+- Seat check: pending invites count toward seats; accept does not double-count.
+- `tx.update(r, data)` replaces `data` entirely — always spread `r.data`.
+- Source quota is checked before discovery/connect so tests can block without a live DB.
+- `createApp` applies license options into module state; tests must `resetLicenseState()` / restore config in `afterEach`.
 
 ## Pointers
 
 | Item | Location |
 |------|----------|
-| Spec | — |
+| Spec / plan | `/Users/macbook/.cursor/plans/saas_single-tenant_mvp_415804c7.plan.md` |
 | Tasks | `tasks/todo.md` |
 | Branch | current |
-| Key files | `package.json`, `packages/*/package.json`, `compose.yaml`, `apps/web/src/shell/*`, `apps/web/src/kit/kit.css`, `docs/assets/logo-*.svg` |
+| Key files | `apps/api/src/license.ts`, `apps/api/src/auth.ts`, `apps/api/src/providers.ts`, `apps/web/src/settings.tsx`, `tests/license-quotas.test.ts` |

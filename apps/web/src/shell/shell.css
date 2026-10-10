@@ -963,6 +963,77 @@ main.rosf-main:focus {
   gap: 12px;
   color: var(--rosf-text-2);
 }
+.rosf-auth-card {
+  width: min(420px, 100%);
+  display: grid;
+  gap: 16px;
+  padding: 28px 28px 24px;
+  border: 1px solid var(--rosf-border);
+  border-radius: var(--rosf-radius-lg, 12px);
+  background: var(--rosf-surface, var(--rosf-bg));
+  color: var(--rosf-text);
+  box-shadow: 0 12px 40px color-mix(in srgb, var(--rosf-text) 6%, transparent);
+}
+.rosf-auth-brand {
+  margin: 0;
+  font-size: var(--rosf-text-sm);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--rosf-muted);
+}
+.rosf-auth-card h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--rosf-text);
+}
+.rosf-auth-form {
+  display: grid;
+  gap: 14px;
+}
+.rosf-auth-field {
+  display: grid;
+  gap: 6px;
+  font-size: var(--rosf-text-sm);
+  color: var(--rosf-text-2);
+}
+.rosf-auth-field input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--rosf-border);
+  border-radius: var(--rosf-radius);
+  background: var(--rosf-bg);
+  color: var(--rosf-text);
+  font: inherit;
+}
+.rosf-auth-field input:focus {
+  outline: 2px solid color-mix(in srgb, var(--rosf-accent, #3b6) 55%, transparent);
+  outline-offset: 1px;
+}
+.rosf-auth-footer {
+  font-size: var(--rosf-text-sm);
+  color: var(--rosf-muted);
+}
+.rosf-auth-footer a {
+  color: var(--rosf-text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.rosf-invite-token {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.rosf-invite-token code {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: var(--rosf-radius);
+  background: color-mix(in srgb, var(--rosf-text) 6%, transparent);
+  font-size: var(--rosf-text-sm);
+  word-break: break-all;
+}
 /* Headings that take focus after navigation need no ring. */
 .rosf-main h1[tabindex="-1"]:focus {
   outline: none;
